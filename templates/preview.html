@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="container">
+
+<h1 style="margin-top: 20px;"><b>{{listing.name}}</b></h1>
+<h6 class="text-muted">{{listing.location}}</h6>
+<br/>
+<h6>All Room Options</h6>
+<div class="scrollmenu">
+    {% for option in listing.roomOptions %}
+        <a href="#"><button class="pill-option">{{option}}</button></a>
+    {% endfor %}
+
+</div>
+
+<div class="scrollmenu">
+        {% for listing in listing.images %}
+        <a href="">
+            <div class="imagecard">
+                <img src={{listing}} style="width: 300px; height:200px; object-fit: cover; border-radius: 20px;" alt="image" srcset="">
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <h4>One In A Room</h4>
+    
+    <div style="display: flex;">
+        <h6><b>Ghc 3000.00 </b></h6>  <h6 class="text-muted" style="margin-left: 5px;"> per person.</h6>
+    </div>
+   
+
+    <h6 style="font-weight: 200;">{{listing.description}}</h6>
+
+    <br/>
+    <button class="pill-button" style="width: 100%;" >Reserve This Place</button>
+    <br/>
+    <a href="{{url_for('enquiry')}}">
+        <button class="pill-button-alternate" style="width: 100%; margin-top: 2vh;">Make Enquiry</button>
+    </a>
+
+    <!-- Options -->
+
+    <!-- Reviews -->
+
+    <div class="card" style="margin-top: 3vh;">
+        <h2><b>4.0</b></h2><span><h6 class="text-muted">based on 237 reviews</h6></span>
+        <h4 style="margin-top: 1vh;"><b>Reviews</b></h4>
+
+        {% for key in reviewKeys %}
+        <div style="display: flex; align-items: center;">
+            <h6 class="text-muted" style="margin-right: 10px;">{{key}}</h6>
+                <div class="progress" style="width: 100%;">
+                    <div class="progress-bar" role="progressbar" aria-valuenow="{{reviewData[key]}}"
+                    aria-valuemin="0" aria-valuemax="100" style="width:{{reviewData[key]}}%">
+                    <span class="sr-only"></span>
+                    </div>
+                    </div>
+            </div> 
+        {% endfor %}
+
+        <br/>
+        <button class="pill-button" style="width: 100%;">View All Reviews</button>
+
+    </div>
+    <div class="card" style="margin-top: 3vh;">
+        
+        <!-- <h2><b>Amenties</b></h2><span><h6 class="text-muted">{{listing.amentites|length}}</h6></span> -->
+        <h4 style="margin-top: 1vh;"><b>Amenities</b></h4>
+        <div class="row">
+
+        {% for key in listing.amenities %}
+            <div style="display: flex; align-items: center;" class="col-md-4">
+                <h6 class="text-muted" style="margin-right: 10px;">{{loop.index}}. {{key}}</h6>
+            </div> 
+            
+            {% endfor %}
+        </div>
+
+        <!-- <br/> -->
+        <!-- <button class="pill-button" style="width: 100%;">View All Reviews</button> -->
+
+    </div>
+
+
+
+    
+
+</div>
+
+{% endblock %}

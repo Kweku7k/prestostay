@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+
+<div class="container">
+    <div class="row" style="justify-content: space-around; margin-top: 1vh;">
+        <div class="col-md-6">
+            <div class="defaultCard">
+                <form action="" method="post">
+                    {{form.hidden_tag()}}
+
+
+                <h1 class="heading" style="text-align: center; margin-top: 2vh;">{{purchaseData.name}}</h1>
+                <h4 style="text-align: center; width: 100%; ">{{purchaseData.roomDescription}}</h4>   
+                <h6 style="text-align: center; width: 100%; ">{{purchaseData.price}}</h6>   
+  
+
+    <div class="inputTextHolder">
+        <h6>{{form.name.label}}</h6>
+        {{form.name (class="inputTextCard", placeholder="Enter the recipient name")}}
+        {% for error in form.name.errors %}
+        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+        {% endfor %}
+    </div>
+    <div class="inputTextHolder">
+        <h6>{{form.contact.label}}</h6>
+        {{form.contact (class="inputTextCard", placeholder="Enter your phone number")}}
+        {% for error in form.contact.errors %}
+        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+        {% endfor %}
+    </div>
+    <!-- <div class="inputTextHolder">
+        <h6>{{form.contact.label}}</h6>
+        {{form.contact (class="inputTextCard", placeholder="Enter your phone number")}}
+        {% for error in form.contact.errors %}
+        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+        {% endfor %}
+    </div> -->
+    <div class="inputTextHolder">
+        <h6>{{form.note.label}}</h6>
+        {{form.note (class="inputTextCard", placeholder="Leave a message.")}}
+        {% for error in form.note.errors %}
+        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+        {% endfor %}
+    </div>
+
+    <br/>
+    {{form.submit(class="pill-button", style="width: 100%;")}}
+
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+<div class="container">
+<div class="info-block" style="margin-top: 5vh;">
+<h4 onclick="openNav()">Transactions</h4>
+<h6>{{user.username}}</h6>
+<!-- Scale -->
+
+<br>
+
+
+<div class="container">
+
+    {% for transaction in transactions %}
+    <a href="#">
+
+        <div class="card row" style=" display: flex; justify-content: space-between; padding: 20px; flex-direction: row;">
+            <div style="width:fit-content; ">
+                <h6 style="width: fit-content;">{{transaction.id}} . {{transaction.account}} - Ghc{{transaction.amount}} </h6>
+                <h6 class="text-muted" style="width: fit-content;">{{transaction.date_created.strftime("%H:%M:%S")}} - {{transaction.reference}}</h6>
+            </div>
+
+            <div style="width:fit-content; display: flex; align-items: center; ">
+                {% if transaction.status == '1' %}
+                <div class="statusEllipse-success"></div>
+                {% elif transaction.status == '2' or transaction.status == '3' %}
+                <div class="statusEllipse-failed"></div>
+                {% elif transaction.status == '4' %}
+                <div class="statusEllipse-pending"></div>
+                {% endif %}
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+
+
+
+</div>
+
+<script>
+    /* Set the width of the sidebar to 250px and the left margin of the page content to 250px */
+function openNav() {
+    document.getElementById("mySidebar").style.width = "250px";
+    document.getElementById("main").style.marginLeft = "250px";
+}
+/* Set the width of the sidebar to 0 and the left margin of the page content to 0 */
+function closeNav() {
+    document.getElementById("mySidebar").style.width = "0";
+    document.getElementById("main").style.marginLeft = "0";
+}
+</script>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+
+google.charts.load('current', {packages: ['corechart', 'line']});
+google.charts.setOnLoadCallback(drawCurveTypes);
+
+function drawCurveTypes() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('number', 'X');
+    data.addColumn('number', 'Dogs');
+    data.addColumn('number', 'Cats');
+
+    data.addRows([
+      [0, 0, 0],    [1, 10, 5],   [2, 23, 15],  [3, 17, 9],   [4, 18, 10],  [5, 9, 5],
+      [6, 11, 3],   [7, 27, 19],  [8, 33, 25],  [9, 40, 32],  [10, 32, 24], [11, 35, 27],
+      [12, 30, 22], [13, 40, 32], [14, 42, 34], [15, 47, 39], [16, 44, 36], [17, 48, 40],
+      [18, 52, 44], [19, 54, 46], [20, 42, 34], [21, 55, 47], [22, 56, 48], [23, 57, 49],
+      [24, 60, 52], [25, 50, 42], [26, 52, 44], [27, 51, 43], [28, 49, 41], [29, 53, 45],
+      [30, 55, 47], [31, 60, 52], [32, 61, 53], [33, 59, 51], [34, 62, 54], [35, 65, 57],
+      [36, 62, 54], [37, 58, 50], [38, 55, 47], [39, 61, 53], [40, 64, 56], [41, 65, 57],
+      [42, 63, 55], [43, 66, 58], [44, 67, 59], [45, 69, 61], [46, 69, 61], [47, 70, 62],
+      [48, 72, 64], [49, 68, 60], [50, 66, 58], [51, 65, 57], [52, 67, 59], [53, 70, 62],
+      [54, 71, 63], [55, 72, 64], [56, 73, 65], [57, 75, 67], [58, 70, 62], [59, 68, 60],
+      [60, 64, 56], [61, 60, 52], [62, 65, 57], [63, 67, 59], [64, 68, 60], [65, 69, 61],
+      [66, 70, 62], [67, 72, 64], [68, 75, 67], [69, 80, 72]
+    ]);
+
+    var options = {
+      hAxis: {
+        title: 'Time'
+      },
+      vAxis: {
+        title: 'Popularity'
+      },
+      series: {
+        1: {curveType: 'function'}
+      }
+    };
+
+    var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+    chart.draw(data, options);
+  }
+</script>
+
+
+{% endblock %}

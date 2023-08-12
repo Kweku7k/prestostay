@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+
+{% block body %}
+    <div class="container">
+        <div class="flexBar" style="align-items: center; margin: 10px auto;">
+            <div>
+                <h1>Discover</h1>
+                <h6 style="color: rgb(46, 46, 200);"> 📍Central University</h6>
+            </div>
+            
+            <button class="pill-button">🔍</button>
+        </div>
+
+        <h6 class="text-muted" style="margin-top: 20px;">Suggestions</h6>
+        <div class="scrollmenu">
+            <a href="#"><button class="pill-option">Apartments</button></a>
+            <a href="#"><button class="pill-option-alternate">Male Only</button></a>
+            <a href="#"><button class="pill-option-alternate">Female Only</button></a>
+            <a href="#"><button class="pill-option-alternate">On Campus</button></a>
+        </div>
+
+        <h4 style="margin-top: 20px;">Most Popular</h4>
+        <div class="scrollmenu">
+            {% for listing in suggestions %}
+            <a href="{{url_for('preview')}}">
+                <div class="imagecard">
+                    <img src={{listing.image}} style="width: 300px; height: 150px; object-fit: cover; border-radius: 20px;" alt="image" srcset="">
+                    <h4>{{listing.name}}</h4>
+                    <h6 class="text-muted">{{listing.tag}}</h6>
+                </div>
+            </a>
+            {% endfor %}  
+        </div>
+
+        <h4 style="margin-top: 20px;">New Offers</h4>
+        <div class="scrollmenu">
+            {% for listing in newOffers %}
+            <a href="">
+                <div class="imagecard">
+                    <img src={{listing.image}} style="width: 300px; height: 150px; object-fit: cover; border-radius: 20px;" alt="image" srcset="">
+                    <h4>{{listing.name}}</h4>
+                    <h6 class="text-muted">{{listing.tag}}</h6>
+                </div>
+            </a>
+
+            {% endfor %}
+
+            
+            
+        </div>
+
+        
+
+
+
+    </div>
+        
+{% endblock %}
