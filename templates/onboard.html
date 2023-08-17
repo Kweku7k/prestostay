@@ -12,8 +12,7 @@
                 <form action="" method="post">
                     {{form.hidden_tag()}}
                 <div class="ellipse" style="border: none; border-radius: 50%; overflow: hidden; margin: auto; background-color: rgb(48, 44, 255); border-radius:rgb(48, 44, 255);">
-                <img src="{{url_for("static", filename="img/memoji.png")}}" style="width: 100%;" alt="" srcset="">
-                 <!-- <link rel="stylesheet" href="{{url_for("static", filename="css/style.css")}}"> -->
+                    <img src="{{url_for('static', filename='img/memoji.png')}}" style="width: 100%;" alt="" srcset="">
                 </div>
 
                 <h1 class="heading" style="text-align: center; margin-top: 5vh;">Welcome To Presto Stay</h1>
@@ -41,6 +40,14 @@
                     <h6>{{form.phone.label}}</h6>
                     {{form.phone (class="inputTextCard", placeholder="Please enter your phone number")}}
                     {% for error in form.phone.errors %}
+                    <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                    {% endfor %}
+                </div>
+
+                <div class="inputTextHolder">
+                    <h6>{{form.listing.label}}</h6>
+                    {{form.listing (class="inputTextCard", placeholder="Please enter your listing number")}}
+                    {% for error in form.listing.errors %}
                     <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                     {% endfor %}
                 </div>

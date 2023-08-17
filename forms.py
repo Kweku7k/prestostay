@@ -9,7 +9,6 @@ class FindUser(FlaskForm):
     submit = SubmitField('Proceed')
 
 class PaymentForm(FlaskForm):
-    # hostel = SelectField('Hostel', choices=[('','---Select---'),('Pronto Hostel', 'Pronto Hostel')]) #Api call for all rooms
     network = SelectField('Network', choices=[('','--Select--'),('MTN', 'MTN'),('VODAFONE','VODAFONE'),('AIRTELTIGO','AIRTELTIGO')]) #Api call for all rooms
     name = StringField('Name')
     amount = StringField('Amount', validators=[DataRequired()])
@@ -27,13 +26,15 @@ class ListingForm(FlaskForm):
     suggestions = StringField('Suggestions', validators=[DataRequired()])
     submit = SubmitField('Upload')
 
-class OnboardForm(FlaskForm):
-    username = StringField('Name', validators=[DataRequired()])
-    phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=15, message="Your phone number should be more than 10 digits and less than 15")])
-    email = StringField('Email', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
-    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password', message='Your passwords dont match, please try again')])
-    submit = SubmitField('Sign Up')
+class SubListingForm(FlaskForm):
+    name = StringField('Name', validators=[DataRequired()])
+    price = FloatField('Price', validators=[DataRequired()])
+    description = StringField('Description', validators=[DataRequired()])
+    submit = SubmitField('Create')
+
+class UserListing(FlaskForm):
+    sublisting = SelectField('Network', choices=[('','--Select--'),('MTN', 'MTN'),('VODAFONE','VODAFONE'),('AIRTELTIGO','AIRTELTIGO')]) #Api call for all rooms
+    submit = SubmitField('Done')
 
 class ProfileForm(FlaskForm):
     username = StringField('Name', validators=[DataRequired()])
@@ -52,6 +53,7 @@ class OnboardForm(FlaskForm):
     username = StringField('Name', validators=[DataRequired()])
     phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=15, message="Your phone number should be more than 10 digits and less than 15")])
     email = StringField('Email', validators=[DataRequired()])
+    listing = SelectField('Listing', choices=[('','---Select---'),('Pronto Hostel', 'Pronto Hostel')]) #Api call for all rooms
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password', message='Your passwords dont match, please try again')])
     submit = SubmitField('Update')
