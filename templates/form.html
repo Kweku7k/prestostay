@@ -30,13 +30,7 @@
         <h6 style="color: red; font-weight: 100;">{{error}}</h6>
         {% endfor %}
     </div>
-    <!-- <div class="inputTextHolder">
-        <h6>{{form.contact.label}}</h6>
-        {{form.contact (class="inputTextCard", placeholder="Enter your phone number")}}
-        {% for error in form.contact.errors %}
-        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
-        {% endfor %}
-    </div> -->
+  
     <div class="inputTextHolder">
         <h6>{{form.note.label}}</h6>
         {{form.note (class="inputTextCard", placeholder="Leave a message.")}}
@@ -49,6 +43,10 @@
     {{form.submit(class="pill-button", style="width: 100%;")}}
 
 
+        </div>
+    </div>
 </div>
+</div>
+
 
 {% endblock %}

@@ -6,7 +6,7 @@
 
 
 <div class="info-block">
-    <h4>Analytics</h4>
+    <!-- <h4>Analytics</h4> -->
     <br>
     <div data-aos="fade-up"  data-aos-delay="300"  class="card" style="padding: 10;">
 
@@ -28,6 +28,49 @@
         <br/>
 
     </div>
+
+    <div class="table-responsive">
+        <table class="table table-primary">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Phone</th>
+                    <th scope="col">Listing</th>
+                    <th scope="col">Balance</th>
+                    <th scope="col">Action</th>
+                    <th scope="col">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr class="">
+                        <td scope="row">
+                            <a href="{{url_for('profile',id=user.id)}}">
+                                    {{user.username}}
+                            </a>
+                        </td>
+                        <td scope="row">{{user.phone}}</td>
+                        <td scope="row">{{user.listing}}</td>
+                        <a href="{{url_for('profile', id=user.id)}}">
+                            <td scope="row" style="font-weight: bold; color: red;">{{user.balance}}</td>
+                        </a>
+                        <td scope="row">
+                        <a href="{{url_for('deleteuser', id=user.id)}}">
+                            delete
+                        </a>
+                        </td>
+                        <td scope="row">
+                            <a href="{{url_for('resendsms', id=user.id)}}">
+                                resend
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+    
 </div>
 
 </div>

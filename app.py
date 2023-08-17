@@ -18,8 +18,11 @@ import requests
 
 app=Flask(__name__)
 bcrypt = Bcrypt(app)
+sandboxDb = "postgresql://postgres:adumatta@database-1.crebgu8kjb7o.eu-north-1.rds.amazonaws.com:5432/stay"
 app.config['SECRET_KEY'] = 'c280ba2428b2157916b13s5e0c676dfde'
-app.config['SQLALCHEMY_DATABASE_URI']= "sqlite:///test.db"
+# app.config['SQLALCHEMY_DATABASE_URI']= "sqlite:///test.db"
+app.config['SQLALCHEMY_DATABASE_URI']= sandboxDb
+
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -77,8 +80,8 @@ class SubListing(db.Model):
     name = db.Column(db.String)
     price = db.Column(db.Float)
     description = db.Column(db.String)
-    listingId = db.Column(db.Integer, db.ForeignKey('listing.id'))
-    superListing = db.Column(db.Integer, db.ForeignKey('listing.name'))
+    listingId = db.Column(db.String)
+    superListing = db.Column(db.String)
     
     def __repr__(self):
         return f"SubListing('id: {self.id}', 'name:{self.name}', 'superlisting:{self.listingId}'. '{self.superListing}')"
@@ -86,7 +89,7 @@ class SubListing(db.Model):
 class Image(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.String, nullable=False)
-    listingId = db.Column(db.Integer, db.ForeignKey('listing.id'), nullable=False)
+    listingId = db.Column(db.String)
 
     def __repr__(self):
         return f"Listing('id: {self.id}', 'name:{self.suggestion}', 'location:{self.location}')" 
@@ -289,6 +292,7 @@ def createTransaction(body):
         username=body.get("username"),
         roomID=body.get("roomID"),
         amount=body.get("amount"),
+        listing=body.get("listing"),
         balanceBefore=body.get("balanceBefore"),
         account = body.get("account"),
         network = body.get("network"),
@@ -352,7 +356,7 @@ def payWithPrestoPay(transaction):
                 # create korba - presto transaction here and assign to orderId
         app.logger.info(transaction.network)
         # transaction = korbaCheckout(candidate, amount, phone)
-        description = "Buying "+ str(transaction.amount) +" votes for "+ str(transaction.username) + " "+str(candidate.award) + " election."
+        description = "Paying GHS"+ str(transaction.amount) +" to "+ str(transaction.listing) + " for "+str(transaction.username) + "."
         callbackUrl = baseUrl+str(transaction.id)
         app.logger.info(callbackUrl)
         
@@ -606,7 +610,9 @@ def onboard():
         try:
             db.session.add(newuser)
             db.session.commit()
-            send_sms(newuser.phone, "You have been successfully onboarded to PrestoPay. \nhttps://prestoghana.com/dashboard \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
+            send_sms(newuser.phone, "You have been successfully onboarded to PrestoStay. \nhttps://stay.prestoghana.com" + newuser.id +  " \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
+            sendTelegram(newuser.phone, newuser.name +" : " + newuser.phone + "has onboarded to PrestoPay. \nhttps://stay.prestoghana.com/profile/ \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
+
         except Exception as e:
             print("User was not able to be created")
         print("Registered new user: " + newuser.username + " " + newuser.email)
@@ -629,6 +635,10 @@ def findme():
     form = FindUser()
     if form.validate_on_submit():
         user = User.query.filter_by(phone = form.phone.data).first()
+
+        if user is None:
+            flash(f'We couldnt find anyone with this phone number.')
+            return redirect(url_for('findme'))
         return redirect(url_for('pay', userId=user.id))
         # return render_template('confirmUser.html', user=user, form=form)
     return render_template('pay.html', current_user=None, form=form)
@@ -646,6 +656,7 @@ def pay(userId):
                 "userId":user.id,
                 "username":user.username,
                 "roomID":user.roomNumber,
+                "listing":user.listing,
                 "amount":form.amount.data,
                 "balanceBefore":user.balance,
                 "account":form.account.data, 
@@ -692,15 +703,16 @@ def confirm(transactionId):
             if entry != None: #If a vote was created
                 # message = "You have successfully bought " + str(entry.amount) + " vote(s) for " + transaction.username + "\n TransactionID: " + str(transaction.id)+"PRS"+str(transaction.ref) + "\n \n Powered By PrestoStay"
                 
-                message = "Student Name:"+ str(transaction.username) + "\n Hostel Name: "+transaction.listing + "Fee Amount:" + transaction.amount + "\n Payment Method:"+transaction.channel + "\nPayment  Date" + transaction.date_created + "Receipt Number: PRS" + str(transaction.id) + "REF" + str(transaction.ref) +"Your payment has been received."
+                message = "Student Name:"+ str(transaction.username) + "\nHostel Name: "+transaction.listing + "\nAmount:" + str(transaction.amount) + "\nPayment Method:"+transaction.channel + "\nPayment  Date" + transaction.date_created.strftime("%Y-%m-%d %H:%M:%S") + "\nReceipt Number: PRS" + str(transaction.id) + "REF" + str(transaction.ref) +"\nYour payment has been received successfully!."
 
                 app.logger.info("send_sms || PrestoStay)")
                 send_sms(transaction.account, message)
 
-                responseMessage = transaction.listing + "\nSuccessfully bought " +str(transaction.amount) + " for " + str(transaction.username) + "." + "\nBefore: " + str(transaction.votesBefore) + "\nAfter: "+ str(transaction.balanceAfter) + "\nTransactionId:" + str(transaction.id) + "\nAccount:" + str(transaction.network) + " : "+ str(transaction.account) + "\nVoteId: " + str(entry.id)
+                responseMessage = transaction.listing + "\nSuccessfully bought " +str(transaction.amount) + " for " + str(transaction.username) + "." + "\nBefore: " + str(transaction.balanceBefore) + "\nAfter: "+ str(transaction.balanceAfter) + "\nTransactionId:" + str(transaction.id) + "\nAccount:" + str(transaction.network) + " : "+ str(transaction.account) + "\nVoteId: " + str(entry.id)
                 print(responseMessage)
                 app.logger.info(responseMessage)
                 sendTelegram(responseMessage)
+                flash(f'This transaction was successful! You should recieve and sms.')
             else:
                 app.logger.error("Transaction: " + str(transaction.id) + " was attempting to be recreated.")
             
@@ -730,7 +742,8 @@ def dashboard():
 
 
 @app.route('/upload', methods=['GET', 'POST'])
-def upload():
+def upload(listing="Pronto Hostel"):
+    users = User.query.filter_by(listing=listing).all()
     if request.method == 'POST':
 
         if 'csv_file' not in request.files:
@@ -761,12 +774,8 @@ def upload():
         print(message)
 
         return redirect(url_for('dashboard'))
-
-       
-
-
     
-    return render_template('upload.html')
+    return render_template('upload.html', users=users)
 
 
 @app.route('/transactions/<int:userId>', methods=['GET', 'POST'])
@@ -775,6 +784,80 @@ def usertransactions(userId):
     transactions = Transactions.query.filter_by(userId = user.id).all()
     print(transactions)
     return render_template('alltransactions.html', user=user,transactions=transactions)
+
+@app.route('/deleteuser/<int:id>', methods=['GET', 'POST'])
+def deleteuser(id):
+    user = User.query.get_or_404(id)
+    if user == None:
+        flash(f'There was no user with that id.')
+    try:
+        db.session.delete(user)
+        flash(f'has been delete successfully!')
+    except Exception as e:
+        flash(f'This action failed.')
+
+    return redirect('upload')
+
+
+@app.route('/resendsms/<int:id>', methods=['GET', 'POST'])
+def resendsms(id):
+    user = User.query.get_or_404(id)
+    if user == None:
+        flash(f'There was no user with that id.')
+    try:
+        print("Retrying sms to " + user.phone)
+        retrymessage = "You have been successfully onboarded to PrestoStay. \nhttps://stay.prestoghana.com/" + str(user.id) +  " \nYour username is "+ user.username+ "\nIf you need any form of support you can call +233545977791 "
+        
+        smsresponse = send_sms(user.phone, retrymessage)
+        print(smsresponse["status"])
+
+        flash(f'has been delete successfully!')
+    except Exception as e:
+        print(e)
+        flash(f'This action failed.')
+
+    return redirect(url_for('upload'))
+
+@app.route('/profile/<int:id>', methods=['GET', 'POST'])
+def profile(id):
+    user = User.query.get_or_404(id)
+    form = ProfileForm()
+    if user != None:
+        print(user)
+        if request.method == 'POST':
+            if form.validate_on_submit():
+                try:
+                    user.username = form.username.data
+                    user.listing = form.listing.data
+                    user.balance = form.balance.data
+                    user.phone = form.phone.data
+                    user.indexNumber = form.indexNumber.data
+                    user.fullAmount = form.fullAmount.data
+                    user.email = form.email.data
+                    db.session.commit()
+
+                    flash(f'' + user.username+' has been updated successfully')
+                except Exception as e:
+                    print(e)
+                    reportError(e)
+                    flash(f'Updating of your profile failed, please check and try again')
+        
+            else:
+                print(form.errors)
+        elif request.method == 'GET':
+            form.username.data = user.username
+            form.listing.data = user.listing
+            form.balance.data = user.balance
+            form.phone.data = user.phone
+            form.indexNumber.data = user.indexNumber
+            form.fullAmount.data = user.fullAmount
+            form.email.data = user.email
+            form.paid.data = user.paid
+        return render_template('profile.html', user=user, form=form)
+    else:
+        return render_template('404.html', message = "The user you chose cant be found")
+
+
 
 if __name__ == '__main__':
     app.run(port=5000, host="0.0.0.0",debug=True)
