@@ -1,0 +1,121 @@
+{% extends "layout.html" %}
+
+{% block head %}
+
+{% endblock %}
+{% block body %}
+
+    <div class="container">
+        <div class="row" style="justify-content: space-around; margin-top: 5vh;">
+            <div class="col-md-6">
+                <div class="defaultCard">
+                    <div class="ellipse" style="border: none; border-radius: 50%; overflow: hidden; margin: auto; background-color: rgb(48, 44, 255); border-radius:rgb(48, 44, 255);">
+                    <img src="{{url_for('static', filename='img/memoji.png')}}" style="width: 100%;" alt="" srcset="">
+                    </div>
+
+                    <h1 class="heading" style="text-align: center; margin-top: 5vh;">{{user.username}}</h1>
+                    <h6 style="text-align: center; width: 100%; " class="text-muted">{{user.listing}} </h6>   
+                    <!-- <h6 style="text-align: center; width: 100%; ">{{user.phone}} </h6>    -->
+                    
+                    <br/>
+                
+
+
+                    <form action="" method="post">
+                        {{form.hidden_tag()}}
+                        <div class="inputTextHolder">
+                            <h6>{{form.username.label}}</h6>
+                            {{form.username (class="inputTextCard", placeholder="How much are you sending")}}
+                            {% for error in form.username.errors %}
+                            <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                            {% endfor %}
+                        </div>
+
+                        <div class="inputTextHolder">
+                            <h6>{{form.email.label}}</h6>
+                            {{form.email (class="inputTextCard", placeholder="Enter Your Email Address")}}
+                            {% for error in form.email.errors %}
+                            <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                            {% endfor %}
+                        </div>
+
+
+
+                        <div class="inputTextHolder">
+                            <h6>{{form.listing.label}}</h6>
+                            {{form.listing (class="inputTextCard", placeholder="How much are you sending")}}
+                            {% for error in form.listing.errors %}
+                            <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                            {% endfor %}
+                        </div>
+
+
+                        <div class="inputTextHolder">
+                            <h6>{{form.indexNumber.label}}</h6>
+                            {{form.indexNumber (class="inputTextCard", placeholder="How much are you sending")}}
+                            {% for error in form.indexNumber.errors %}
+                            <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                            {% endfor %}
+                        </div>
+
+
+                        <div class="inputTextHolder">
+                            <h6>{{form.phone.label}}</h6>
+                            {{form.phone (class="inputTextCard", placeholder="How much are you sending")}}
+                            {% for error in form.phone.errors %}
+                            <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                            {% endfor %}
+                        </div>
+
+
+                        <div class="inputTextHolder">
+                            <h6>{{form.phone.label}}</h6>
+                            {{form.phone (class="inputTextCard", placeholder="How much are you sending")}}
+                            {% for error in form.phone.errors %}
+                            <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                            {% endfor %}
+                        </div>
+
+                        <div class="row justify-content-center align-items-center g-2">
+                        <div class="col">
+                            <div class="inputTextHolder">
+                                <h6>{{form.paid.label}}</h6>
+                                {{form.paid (class="inputTextCard", placeholder="Paid")}}
+                                {% for error in form.phone.errors %}
+                                <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="inputTextHolder">
+                                <h6>{{form.balance.label}}</h6>
+                                {{form.balance (class="inputTextCard", placeholder="Balance")}}
+                                {% for error in form.phone.errors %}
+                                <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="inputTextHolder">
+                                <h6>{{form.fullAmount.label}}</h6>
+                                {{form.fullAmount (class="inputTextCard", placeholder="Full Amount")}}
+                                {% for error in form.phone.errors %}
+                                <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                        {{form.submit(class="pill-button", style="width: 100%; margin-top:5vh;")}}
+                    </form>
+
+
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

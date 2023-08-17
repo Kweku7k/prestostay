@@ -14,16 +14,17 @@
 <div class="container">
 
     {% for transaction in transactions %}
-    <a href="#">
+    <a href="{{url_for('transaction',transactionId = transaction.id )}}">
 
         <div class="card row" style=" display: flex; justify-content: space-between; padding: 20px; flex-direction: row;">
             <div style="width:fit-content; ">
                 <h6 style="width: fit-content;">{{transaction.id}} . {{transaction.account}} - Ghc{{transaction.amount}} </h6>
-                <h6 class="text-muted" style="width: fit-content;">{{transaction.date_created.strftime("%H:%M:%S")}} - {{transaction.reference}}</h6>
+                <!-- <h6 class="text-muted" style="width: fit-content;">{{transaction.date_created.strftime("%H:%M:%S")}} || {{transaction.date_created.strftime("%H:%M:%S")}} </h6> -->
+                <h6 class="text-muted" style="width: fit-content;">{{transaction.date_created.strftime("%c")}} </h6>
             </div>
 
             <div style="width:fit-content; display: flex; align-items: center; ">
-                {% if transaction.status == '1' %}
+                {% if transaction.paid %}
                 <div class="statusEllipse-success"></div>
                 {% elif transaction.status == '2' or transaction.status == '3' %}
                 <div class="statusEllipse-failed"></div>
