@@ -53,7 +53,7 @@ class OnboardForm(FlaskForm):
     username = StringField('Name', validators=[DataRequired()])
     phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=15, message="Your phone number should be more than 10 digits and less than 15")])
     email = StringField('Email', validators=[DataRequired()])
-    listing = SelectField('Listing', choices=[('','---Select---'),('Pronto Hostel', 'Pronto Hostel')]) #Api call for all rooms
+    listing = SelectField('Listing', choices=[]) #Api call for all rooms
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password', message='Your passwords dont match, please try again')])
     submit = SubmitField('Update')

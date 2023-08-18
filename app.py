@@ -67,6 +67,10 @@ class Listing(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     description = db.Column(db.String)
+    expectedRevenue = db.Column(db.Float)
+    amountRecieved = db.Column(db.Float)
+    amountDue = db.Column(db.Float)
+    description = db.Column(db.String)
     location = db.Column(db.String)
     locationTag = db.Column(db.String)
     images = db.Column(db.String)
@@ -74,7 +78,7 @@ class Listing(db.Model):
     suggestions = db.Column(db.String)
 
     def __repr__(self):
-        return f"Listing('id: {self.id}', 'name:{self.suggestion}', 'location:{self.location}')"
+        return f"Listing('id: {self.id}', 'name:{self.name}',  'slug:{self.slug}', 'location:{self.location}')"
 
 class SubListing(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -82,6 +86,8 @@ class SubListing(db.Model):
     price = db.Column(db.Float)
     description = db.Column(db.String)
     listingId = db.Column(db.String)
+    occupants = db.Column(db.Integer)
+    divideCost = db.Column(db.Boolean, default=True)
     superListing = db.Column(db.String)
     
     def __repr__(self):
@@ -108,6 +114,7 @@ class User(db.Model):
     indexNumber = db.Column(db.String)
     hostel = db.Column(db.String)
     listing = db.Column(db.String)
+    listingSlug = db.Column(db.String)
     sublisting = db.Column(db.String)
     roomNumber = db.Column(db.String)
     status = db.Column(db.String, default="Pending")
@@ -446,9 +453,13 @@ def updateUserBalance(transaction):
 
     try: #Attatch vote to candidate
         user = User.query.get_or_404(int(transaction.userId))
+        listing = Listing.query.filter_by(slug = user.listingSlug).first()
         
         transaction.balanceBefore = user.balance
         transaction.balanceAfter = user.balance - newLedgerEntry.amount
+
+        listing.amountRecieved += newLedgerEntry.amount
+        listing.amountDue -= newLedgerEntry.amount
 
         app.logger.info("----------------------- Updating balance ---------------------------")
         app.logger.info("Attempting to update " + user.username + " balance from " + str(transaction.balanceBefore) + " to " + str(transaction.balanceAfter))
@@ -484,7 +495,7 @@ def uploadData(filename):
             print(row)
 
             try:
-                user = User(username = row["Name"], password = "0000",email = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+row["Index Number"]+"@prestoghana.com", phone = row["Number"], indexNumber=row["Index Number"], listing="Pronto Hostel", paid=row["Paid"], roomNumber=row["Room Number"], fullAmount=row["Full Amount"], balance=row["Balance"] )
+                user = User(username = row["Name"], password = "0000",email = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+row["Number"]+"@prestoghana.com", phone = row["Number"], indexNumber=row["Index Number"], listing="Pronto Hostel", paid=row["Paid"], roomNumber=row["Room Number"], fullAmount=row["Full Amount"], balance=row["Balance"], listingSlug=row["listingSlug"] )
                 db.session.add(user)
             except Exception as e:
                 message = "There seems to have been an issue with the upload"
@@ -493,6 +504,8 @@ def uploadData(filename):
             db.session.commit()
             
     return message
+
+
 
         
 
@@ -638,10 +651,13 @@ def getallusers():
 @app.route('/onboard', methods=(['POST','GET']))
 def onboard():
     form = OnboardForm()
+
+    form.listing.choices = [(listing.slug, listing.name) for listing in Listing.query.all()]
     if current_user:
         logout_user()
         print ("You have been logged out")
     if form.validate_on_submit():
+        print(form.data)
         # check email
         if User.query.filter_by(email = form.email.data).first() != None:
             print()
@@ -654,8 +670,11 @@ def onboard():
             return render_template('onboard.html', form=form, title="Onboard New User")
         
         else:
+            listing = Listing.query.filter_by(slug=form.listing.data).first()
+            print(listing)
+
             hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-            newuser = User(username=form.username.data, email=form.email.data, phone=form.phone.data, listing=form.listing.data,password=hashed_password)
+            newuser = User(username=form.username.data, email=form.email.data, phone=form.phone.data, listing=form.listing.data, listingSlug=listing.slug, password=hashed_password)
             try:
                 db.session.add(newuser)
                 db.session.commit()
@@ -806,20 +825,22 @@ def confirm(transactionId):
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
-    activeUsers = User.query.count()
-    availableBalance = 1072.00
-    expected_revenue = 1672.00
-    due = expected_revenue - availableBalance
-    todaysBalance = 0
+    listing = Listing.query.get_or_404(1)
+    activeUsers = User.query.filter_by(listingSlug = listing.slug).count()
+    amountRecieved = listing.amountRecieved
+    expected_revenue = listing.expectedRevenue
+    due = expected_revenue - amountRecieved
     totalTransasactions = 20
+    todaysBalance = 20
     print(activeUsers)
-    return render_template('dashboard.html', user=current_user, activeUsers=activeUsers, totalTransasactions=totalTransasactions,todaysBalance=todaysBalance,availableBalance=availableBalance, due=due,expected_revenue=expected_revenue)
+    return render_template('dashboard.html', user=current_user, listing=listing, activeUsers=activeUsers, totalTransasactions=totalTransasactions,todaysBalance=todaysBalance,amountRecieved=amountRecieved, due=due,expected_revenue=expected_revenue)
 
 
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload(listing="Pronto Hostel"):
-    users = User.query.filter_by(listing=listing).all()
+    listing = Listing.query.get_or_404(1)
+    users = User.query.filter_by(listingSlug=listing.slug).all()
     if request.method == 'POST':
 
         if 'csv_file' not in request.files:
@@ -868,11 +889,12 @@ def deleteuser(id):
         flash(f'There was no user with that id.')
     try:
         db.session.delete(user)
+        db.session.commit()
         flash(f'has been delete successfully!')
     except Exception as e:
         flash(f'This action failed.')
 
-    return redirect('upload')
+    return redirect(url_for('upload'))
 
 
 @app.route('/resendsms/<int:id>', methods=['GET', 'POST'])
@@ -894,6 +916,35 @@ def resendsms(id):
 
     return redirect(url_for('upload'))
 
+
+
+
+@app.route('/updateBalance', methods=['GET', 'POST'])
+def updateBalance():
+    listing = Listing.query.get_or_404(1)
+
+    expectedRevenue = 0
+    amountRecieved = 0
+
+    for i in User.query.filter_by(listingSlug=listing.slug).all():
+        print(i)
+        i.balance = i.fullAmount - i.paid
+
+        amountRecieved += i.paid
+        expectedRevenue += i.fullAmount
+
+    # Ledger entry
+
+    listing.amountRecieved = amountRecieved
+    listing.expectedRevenue = expectedRevenue
+
+
+
+    db.session.commit()
+
+    flash(f'Data has been updated!')
+    return redirect(url_for('dashboard'))
+
 @app.route('/profile/<int:id>', methods=['GET', 'POST'])
 def profile(id):
     user = User.query.get_or_404(id)
@@ -902,10 +953,13 @@ def profile(id):
         print(user)
         if request.method == 'POST':
             if form.validate_on_submit():
+                print(form.data)
+
                 try:
                     user.username = form.username.data
                     user.listing = form.listing.data
                     user.balance = form.balance.data
+                    user.paid = form.paid.data
                     user.phone = form.phone.data
                     user.indexNumber = form.indexNumber.data
                     user.fullAmount = form.fullAmount.data
@@ -913,6 +967,7 @@ def profile(id):
                     db.session.commit()
 
                     flash(f'' + user.username+' has been updated successfully')
+                    return redirect(url_for('dashboard'))
                 except Exception as e:
                     print(e)
                     reportError(e)
@@ -920,6 +975,8 @@ def profile(id):
         
             else:
                 print(form.errors)
+                flash(form.errors[0])
+
         elif request.method == 'GET':
             form.username.data = user.username
             form.listing.data = user.listing
