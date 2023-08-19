@@ -89,6 +89,8 @@ class SubListing(db.Model):
     occupants = db.Column(db.Integer)
     divideCost = db.Column(db.Boolean, default=True)
     superListing = db.Column(db.String)
+    listingSlug = db.Column(db.String)
+    slug = db.Column(db.String)
     
     def __repr__(self):
         return f"SubListing('id: {self.id}', 'name:{self.name}', 'superlisting:{self.listingId}'. '{self.superListing}')"
@@ -149,7 +151,7 @@ class User(db.Model):
         return User.query.get(user_id)
 
     def __repr__(self):
-        return '<User {}>'.format(self.username)
+        return f"User ('{self.username}', ' - {self.sublisting}')"
 
 
 class Transactions(db.Model):
@@ -242,11 +244,15 @@ def createListing(body):
 
 def createSubListing(body, listing):
     print(body)
+    cleanedName = body.get("name").replace(" ", "").lower()
     new_sub_listing = SubListing(
         name=body.get("name"),
         description=body.get("description"),
         listingId=listing.id,
-        superListing=listing.slug
+        superListing=listing.slug,
+        listingSlug=listing.slug,
+        price=body.get("price"),
+        slug = listing.slug+"-"+cleanedName
     )
 
     try:
@@ -637,9 +643,10 @@ def newsublisting(listing):
         if form.validate_on_submit():
             newListing = createSubListing(form.data, listing)
             pprint.pprint(newListing)
+            return redirect(url_for('newsublisting', listing=listing.id))
         else:
             print(form.errors)
-        return render_template('newsublisting.html', form=form, current_user=None)
+        return render_template('newsublisting.html', form=form, current_user=None, listing=listing)
     else:
         return render_template('404.html', message="There was no listing with this Id.")
 
@@ -659,41 +666,40 @@ def onboard():
     if form.validate_on_submit():
         print(form.data)
         # check email
-        if User.query.filter_by(email = form.email.data).first() != None:
-            print()
-            print("user")
-            flash(f'There is already a user with this email address')
-            return render_template('onboard.html', form=form, title="Onboard New User")
+        # if User.query.filter_by(email = form.email.data).first() != None:
+        #     print()
+        #     print("user")
+        #     flash(f'There is already a user with this email address')
+        #     return render_template('onboard.html', form=form, title="Onboard New User")
             
-        elif User.query.filter_by(phone = form.phone.data).first() != None:
-            flash(f'There is already a user with this phone number')
-            return render_template('onboard.html', form=form, title="Onboard New User")
+        # elif User.query.filter_by(phone = form.phone.data).first() != None:
+        #     flash(f'There is already a user with this phone number')
+        #     return render_template('onboard.html', form=form, title="Onboard New User")
         
-        else:
-            listing = Listing.query.filter_by(slug=form.listing.data).first()
-            print(listing)
+        # else:
+        listing = Listing.query.filter_by(slug=form.listing.data).first()
+        print(listing)
 
-            hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-            newuser = User(username=form.username.data, email=form.email.data, phone=form.phone.data, listing=form.listing.data, listingSlug=listing.slug, password=hashed_password)
-            try:
-                db.session.add(newuser)
-                db.session.commit()
-                send_sms(newuser.phone, "You have been successfully onboarded to PrestoStay. \nhttps://stay.prestoghana.com" + newuser.id +  " \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
-                sendTelegram(newuser.phone, newuser.name +" : " + newuser.phone + "has onboarded to PrestoPay. \nhttps://stay.prestoghana.com/profile/ \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
-
-            except Exception as e:
-                print("User was not able to be created")
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        newuser = User(username=form.username.data, email=form.email.data, phone=form.phone.data, listing=form.listing.data, listingSlug=listing.slug, password=hashed_password)
+        print(newuser)
+        try:
+            db.session.add(newuser)
+            db.session.commit()
+            send_sms(newuser.phone, "You have been successfully onboarded to PrestoStay. \nhttps://stay.prestoghana.com/" + str(newuser.id) +  " \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
+            sendTelegram(newuser.phone, newuser.username +" : " + newuser.phone + "has onboarded to PrestoPay. \nhttps://stay.prestoghana.com/profile/ \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
+            return redirect(url_for('sublisting', userId=newuser.id))
+        except Exception as e:
+            print(e)
+            print("User was not able to be created")
         print("Registered new user: " + newuser.username + " " + newuser.email)
+        
         print(form.password.data)
         print(form.confirm_password.data)
 
         user = User.query.filter_by(email=form.email.data).first()
 
-        try:
-            login_user(user, remember=True) 
-        except:
-            print("could not log current user in")
-        return redirect(url_for('pay', userId=user.id))
+        return redirect(url_for('sublisting', userId=user.id))
     else:
         print(form.errors)
     return render_template('onboard.html', form=form, title="Onboard New User")
@@ -744,15 +750,42 @@ def pay(userId):
     return render_template('confirmUser.html', user=user, form=form)
 
 
+@app.route('/updateSubListing/<int:userId>/<string:subListingSlug>', methods=['GET', 'POST'])
+def updateSubListing(userId, subListingSlug):
+    user = User.query.get_or_404(userId)
+    sublisting = SubListing.query.filter_by(slug=subListingSlug).first()
+    
+    if user == None:
+        flash(f'No user was found')
+        print('No user was found')
+    elif sublisting == None:
+        flash(f'There was no sublisting with this slug')
+        print('There was no sublisting with this slug')
+
+    try:
+        user.sublistingSlug = subListingSlug
+        user.fullAmount += sublisting.price
+        db.session.commit()
+    except Exception as e:
+        print(e)
+        reportError(e)
+
+    updateBalance()
+
+    return redirect(url_for('pay',userId=user.id))
+
 @app.route('/listing/<int:userId>', methods=['GET','POST'])
 def sublisting(userId):
     user = User.query.get_or_404(userId)
+    listing = Listing.query.filter_by(slug=user.listingSlug).first()
+    print(user)
     form = ListingForm()
-    sublisting = SubListing.query.filter_by(listing=user.listing).first()
+    sublistings = SubListing.query.filter_by(listingSlug=user.listing).all()
+    print(sublisting)
+    print(user.sublisting)
     if user.sublisting != None:
         if request.method == 'POST':
             if form.validate_on_submit():
-
                 try:   
                     user.sublisting = form.sublisting.data
                     user.roomId = form.roomId.data
@@ -767,8 +800,7 @@ def sublisting(userId):
             else:
                 print(form.errors)
                 flash(form.errors[0])
-    return redirect('confirmUser.html', user=user, form=form)
-
+    return render_template('sublisting.html', user=user, listing=listing, sublistings=sublistings, form=form)
 
 @app.route('/transaction/<int:transactionId>', methods=['GET', 'POST'])
 def transaction(transactionId): 
