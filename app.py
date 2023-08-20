@@ -6,7 +6,7 @@ from flask import Flask, flash,redirect,url_for,render_template, request
 from flask_login import current_user, login_user, logout_user
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Enum
+from sqlalchemy import Enum, func
 from itsdangerous import Serializer
 from flask_bcrypt import Bcrypt
 from utils import apiResponse, send_sms, sendTelegram
@@ -66,6 +66,8 @@ class Listing(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
+    email = db.Column(db.String)
+    phone = db.Column(db.String)
     description = db.Column(db.String)
     expectedRevenue = db.Column(db.Float)
     amountRecieved = db.Column(db.Float)
@@ -87,6 +89,7 @@ class SubListing(db.Model):
     description = db.Column(db.String)
     listingId = db.Column(db.String)
     occupants = db.Column(db.Integer)
+    quantity = db.Column(db.Integer, default=0)
     divideCost = db.Column(db.Boolean, default=True)
     superListing = db.Column(db.String)
     listingSlug = db.Column(db.String)
@@ -113,6 +116,7 @@ class User(db.Model):
 
     name = db.Column(db.String)
     phone = db.Column(db.String)
+    role = db.Column(db.String, default="user")
     indexNumber = db.Column(db.String)
     hostel = db.Column(db.String)
     listing = db.Column(db.String)
@@ -158,6 +162,7 @@ class Transactions(db.Model):
     tablename = ['Transactions']
 
     id = db.Column(db.Integer, primary_key=True)
+    appId = db.Column(db.String)
     userId = db.Column(db.String, nullable=False)
     username = db.Column(db.String)
     roomID = db.Column(db.String)
@@ -199,6 +204,7 @@ class LedgerEntry(db.Model):
 
     def __repr__(self):
         return f"Payment Ghc('{self.amount}', ' - {self.userId}')"
+
 
 # ------ FUNCTIONS
 
@@ -264,9 +270,8 @@ def createSubListing(body, listing):
         print(e)
         reportError(e)
 
-    # create listing slug
-
     return body
+
 
 def createNewUser(body):
     print(body)
@@ -325,6 +330,7 @@ def getkeys(json_body):
 def createTransaction(body):
     newTransaction = Transactions(
         userId=body.get("userId"),
+        appId=body.get("appId"),
         username=body.get("username"),
         roomID=body.get("roomID"),
         amount=body.get("amount"),
@@ -650,6 +656,46 @@ def newsublisting(listing):
     else:
         return render_template('404.html', message="There was no listing with this Id.")
 
+
+@app.route('/editsublisting/<int:sublisting>', methods=['GET', 'POST'])
+def editsublisting(sublisting):
+    form = SubListingForm()
+
+    sublisting = SubListing.query.get_or_404(sublisting)
+    listing = Listing.query.filter_by(slug=sublisting.listingSlug).first()
+
+
+    if sublisting != None:
+        if request.method == 'POST':
+            if form.validate_on_submit():
+                try:
+
+                    sublisting.name = form.name.data
+                    sublisting.price = form.price.data
+                    sublisting.quantity = form.quantity.data
+                    sublisting.description = form.description.data
+
+                    db.session.commit()
+                except Exception as e:
+                    print(e)
+                    reportError(e)
+
+                flash(f'' + sublisting.name +' has been updated successfully.')
+                return redirect(url_for('mysublistings'))
+            else:
+                print(form.errors)
+        else:
+            form.name.data = sublisting.name
+            form.price.data = sublisting.price
+            form.quantity.data = sublisting.quantity
+            form.description.data = sublisting.description
+
+
+        return render_template('newsublisting.html', form=form, current_user=None, listing=listing)
+    else:
+        return render_template('404.html', message="There was no listing with this Id.")
+
+
 @app.route('/allusers', methods=['GET', 'POST'])
 def getallusers():
     users = User.query.all()
@@ -666,40 +712,40 @@ def onboard():
     if form.validate_on_submit():
         print(form.data)
         # check email
-        # if User.query.filter_by(email = form.email.data).first() != None:
-        #     print()
-        #     print("user")
-        #     flash(f'There is already a user with this email address')
-        #     return render_template('onboard.html', form=form, title="Onboard New User")
+        if User.query.filter_by(email = form.email.data).first() != None:
+            print()
+            print("user")
+            flash(f'There is already a user with this email address')
+            return render_template('onboard.html', form=form, title="Onboard New User")
             
-        # elif User.query.filter_by(phone = form.phone.data).first() != None:
-        #     flash(f'There is already a user with this phone number')
-        #     return render_template('onboard.html', form=form, title="Onboard New User")
+        elif User.query.filter_by(phone = form.phone.data).first() != None:
+            flash(f'There is already a user with this phone number')
+            return render_template('onboard.html', form=form, title="Onboard New User")
         
-        # else:
-        listing = Listing.query.filter_by(slug=form.listing.data).first()
-        print(listing)
+        else:
+            listing = Listing.query.filter_by(slug=form.listing.data).first()
+            print(listing)
 
-        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        newuser = User(username=form.username.data, email=form.email.data, phone=form.phone.data, listing=form.listing.data, listingSlug=listing.slug, password=hashed_password)
-        print(newuser)
-        try:
-            db.session.add(newuser)
-            db.session.commit()
-            send_sms(newuser.phone, "You have been successfully onboarded to PrestoStay. \nhttps://stay.prestoghana.com/" + str(newuser.id) +  " \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
-            sendTelegram(newuser.phone, newuser.username +" : " + newuser.phone + "has onboarded to PrestoPay. \nhttps://stay.prestoghana.com/profile/ \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
-            return redirect(url_for('sublisting', userId=newuser.id))
-        except Exception as e:
-            print(e)
-            print("User was not able to be created")
-        print("Registered new user: " + newuser.username + " " + newuser.email)
-        
-        print(form.password.data)
-        print(form.confirm_password.data)
+            hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+            newuser = User(username=form.username.data, email=form.email.data, phone=form.phone.data, listing=form.listing.data, listingSlug=listing.slug, password=hashed_password)
+            print(newuser)
+            try:
+                db.session.add(newuser)
+                db.session.commit()
+                send_sms(newuser.phone, "You have been successfully onboarded to PrestoStay. \nhttps://stay.prestoghana.com/" + str(newuser.id) +  " \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
+                sendTelegram(newuser.phone, newuser.username +" : " + newuser.phone + "has onboarded to PrestoPay. \nhttps://stay.prestoghana.com/profile/ \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
+                return redirect(url_for('sublisting', userId=newuser.id))
+            except Exception as e:
+                print(e)
+                print("User was not able to be created")
+            print("Registered new user: " + newuser.username + " " + newuser.email)
+            
+            print(form.password.data)
+            print(form.confirm_password.data)
 
-        user = User.query.filter_by(email=form.email.data).first()
+            user = User.query.filter_by(email=form.email.data).first()
 
-        return redirect(url_for('sublisting', userId=user.id))
+            return redirect(url_for('sublisting', userId=user.id))
     else:
         print(form.errors)
     return render_template('onboard.html', form=form, title="Onboard New User")
@@ -723,11 +769,13 @@ def findme():
 def pay(userId):
     user = User.query.get_or_404(userId)
     form = PaymentForm()
+    listing = Listing.query.filter_by(slug=user.listingSlug).first()
     if request.method == 'POST':
         if form.validate_on_submit():
 
             body={
                 "userId":user.id,
+                "appId":listing.slug,
                 "username":user.username,
                 "roomID":user.roomNumber,
                 "listing":user.listing,
@@ -802,6 +850,13 @@ def sublisting(userId):
                 flash(form.errors[0])
     return render_template('sublisting.html', user=user, listing=listing, sublistings=sublistings, form=form)
 
+@app.route('/mysublistings', methods=['GET', 'POST'])
+def mysublistings():
+    listing = Listing.query.get_or_404(1)
+    sublistings = SubListing.query.filter_by(listingSlug=listing.slug).all()
+    return render_template('mysublistings.html',sublistings=sublistings, listing=listing,user=None)
+
+
 @app.route('/transaction/<int:transactionId>', methods=['GET', 'POST'])
 def transaction(transactionId): 
     transaction = Transactions.query.get_or_404(transactionId)
@@ -855,6 +910,35 @@ def confirm(transactionId):
     app.logger.info(responseBody)
     return responseBody
 
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    logout_user()
+    form = LoginForm()
+    if request.method == 'POST':
+        print(form.email.data)
+        print(form.password.data)
+    # if form.validate_on_submit():
+        user = User.query.filter_by(email = form.email.data).first()
+        print(user)
+        if user and bcrypt.check_password_hash(user.password, form.password.data):
+            print("Logged in successful. \n " + user.username)
+            sendTelegram("Logged in successful. \n " + user.username)
+            login_user(user)
+                # login_user(user)
+            next = request.args.get('next')
+            # if not is_safe_url(next):
+            return redirect(next or url_for('users.dashboard')) 
+            # return redirect(url_f or(dashboard))
+        else:
+            print(form.password.data)
+            # print("The password is not correct")
+            flash(f'There was a problem with your login credentials. Please check try again')
+    else:
+        print("This is a get request")
+    return render_template('login.html', form=form)
+
+
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     listing = Listing.query.get_or_404(1)
@@ -863,9 +947,24 @@ def dashboard():
     expected_revenue = listing.expectedRevenue
     due = expected_revenue - amountRecieved
     totalTransasactions = 20
-    todaysBalance = 20
+    # todaysBalance = 20
+
+    sublistings = SubListing.query.filter_by(listingSlug=listing.slug).count()
+
+    # todaysTransactions = Transactions.query.filter(func.date(Transactions.date_created) == func.date(datetime.datetime.utcnow()), Transactions.paid == True, Transactions.appId == "pronto").all()
+    todaysTransactions = Transactions.query.filter(
+    func.date(Transactions.date_created) == func.date(datetime.datetime.utcnow()),
+    Transactions.paid == True,
+    Transactions.appId == "pronto"
+    ).all()
+    
+    todaysBalance = sum(transaction.amount for transaction in todaysTransactions)
+    totalTodayTransactions = len(todaysTransactions)
+
+    occupied = 0
+    
     print(activeUsers)
-    return render_template('dashboard.html', user=current_user, listing=listing, activeUsers=activeUsers, totalTransasactions=totalTransasactions,todaysBalance=todaysBalance,amountRecieved=amountRecieved, due=due,expected_revenue=expected_revenue)
+    return render_template('dashboard.html', user=current_user, occupied=occupied,sublistings=sublistings, totalTodayTransactions=totalTodayTransactions,listing=listing, activeUsers=activeUsers, totalTransasactions=totalTransasactions,todaysBalance=todaysBalance,amountRecieved=amountRecieved, due=due,expected_revenue=expected_revenue)
 
 
 

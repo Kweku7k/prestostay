@@ -14,20 +14,20 @@
             <h6 class="text-muted">{{listing.name}}</h6>
         </div>
             <a href="{{url_for('updateBalance')}}">
-                <button class="pill-button-alternate">Update Values</button>
-            </a>
-            <a href="{{url_for('upload')}}">
-                <button class="pill-button">Upload Data</button>
+                <button class="pill-button">Refresh Values</button>
             </a>
     </div>
 <br>
+
+
+
 <div class="row">
     <div class="col-md-3 col-6">
         <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
             <div data-aos="fade-up" class="card">
                 <h6>Amount Recieved</h6>
                 <h2 style="font-weight: 700;">GHS {{amountRecieved}}</h2>
-                <h6 class="text-muted">View Ledger</h6>
+                <!-- <h6 class="text-muted">View Ledger</h6> -->
             </div>
         </a>
     </div> 
@@ -37,31 +37,70 @@
             <div data-aos="fade-up" class="card">
                 <h6>Expected Revenue</h6>
                 <h2 style="font-weight: 700;">GHS {{expected_revenue}}</h2>
-                <h6 class="text-muted">Transactions</h6>
+                <!-- <h6 class="text-muted">Transactions</h6> -->
             </div>
         </a>
     </div> 
 
-    <!-- <div class="col-md-3 col-6">
+    <div class="col-md-3 col-6">
         <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
             <div data-aos="fade-up" class="card">
                 <h6>Todays Balance</h6>
-                <h2 style="font-weight: 700;">{{todaysBalance}}</h2>
-                <h6 class="text-muted">{{successfulTransaction}} Transactions</h6>
+                <h2 style="font-weight: 700;">GHS {{todaysBalance}}</h2>
+                <!-- <h6 class="text-muted">{{totalTodayTransactions}} Transaction(s)</h6> -->
             </div>
         </a>
-    </div>  -->
+    </div> 
         
     <div class="col-md-3 col-6">
         <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
             <div data-aos="fade-up" class="card">
                 <h6>Amount Due</h6>
-                <h2 style="font-weight: 700;">{{due}}</h2>
-                <h6 class="text-muted">{{successfulTransaction}} Transactions</h6>
+                <h2 style="font-weight: 700;">GHS {{due}}</h2>
+                <!-- <h6 class="text-muted">{{successfulTransaction}} Transactions</h6> -->
             </div>
         </a>
     </div> 
     </div>
+
+    <div class="flexBar">
+        <div>
+            <h4>Sublisting Sumarry</h4>
+            <h6 class="text-muted">{{listing.name}}</h6>
+        </div>
+            <a href="{{url_for('mysublistings') }}">
+                <button class="pill-button">Edit Sublisting</button>
+            </a>
+    </div>
+<br/>
+    <div class="row">
+    
+
+        <div class="col-md-3 col-6">
+    
+                <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
+                    <div data-aos="fade-up" class="card">
+                        <h6>Total SubListings</h6>
+                        <h2 style="font-weight: 700;">{{sublistings}}</h2>
+                    </div>
+                </a>
+            </div> 
+    
+        
+       
+        
+        <div class="col-md-3 col-6">
+            <a class="link" >
+                <div data-aos="fade-up" data-aos-delay="100" class="card">
+                    <h6>Fully Occupied</h6>
+                    <h2 style="font-weight: 700;">{{occupied}}</h2>
+
+                </div>
+            </a>
+        </div>
+
+    </div>
+    
 
 <div class="row">
 
@@ -100,53 +139,17 @@
 </div> 
 </div>
 
-<div class="row">
-    
-    <h4>Rooms Summary</h4>
-    <div class="col-md-3 col-6">
 
-            <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
-                <div data-aos="fade-up" class="card">
-                    <h6>Active Users</h6>
-                    <h2 style="font-weight: 700;">{{activeUsers}}</h2>
-                    <h6 class="text-muted">{{successfulTransaction}} Transactions</h6>
-                </div>
+<div class="row">
+    <div class="flexBar">
+        <div>
+            <h4>Occupancy Summary</h4>
+            <h6 class="text-muted">{{listing.name}}</h6>
+        </div>
+            <a href="{{url_for('upload')}}">
+                <button class="pill-button">Update Values</button>
             </a>
-        </div> 
-
-    
-   
-    
-    <div class="col-md-3 col-6">
-        <a class="link" >
-            <div data-aos="fade-up" data-aos-delay="100" class="card">
-                <h6>Todays Balance</h6>
-                <h2 style="font-weight: 700;">Ghc{{todaysBalance}}</h2>
-                <h6><u>View all</u></h6>
-            </div>
-        </a>
     </div>
-
-   
-
-    <div class="col-md-3 col-6">
-        <a class="link" >
-            <div data-aos="fade-up" data-aos-delay="100" class="card">
-                <h6>All Transactions</h6>
-                <h2 style="font-weight: 700;">{{totalTransasactions}}</h2>
-                <h6><u>View all</u></h6>
-            </div>
-        </a>
-    </div>
-
-   
-
-</div>
-
-
-<div class="row">
-    
-    <h4>Occupancy Summary</h4>
     <div class="col-md-3 col-6">
 
             <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
@@ -155,6 +158,8 @@
                     <h2 style="font-weight: 700;">{{activeUsers}}</h2>
                     <!-- <h6 class="text-muted">{{successfulTransaction}} Transactions</h6> -->
                 </div>
+
+               
             </a>
         </div> 
 

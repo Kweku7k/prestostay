@@ -37,6 +37,14 @@
                     <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                     {% endfor %}
                 </div>
+
+                <div class="inputTextHolder">
+                    <h6>{{form.quantity.label}}</h6>
+                    {{form.quantity (class="inputTextCard", placeholder="Please enter your quantity number")}}
+                    {% for error in form.quantity.errors %}
+                    <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                    {% endfor %}
+                </div>
                 
                 <div class="inputTextHolder">
                     <h6>{{form.description.label}}</h6>
@@ -45,10 +53,6 @@
                     <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                     {% endfor %}
                 </div>
-
-
-
-
 
                 {{form.submit(class="pill-button", style="width: 100%; margin-top:5vh;")}}
             </div>

@@ -8,6 +8,12 @@ class FindUser(FlaskForm):
     phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=15, message="Your phone number should be more than 10 digits and less than 15")])
     submit = SubmitField('Proceed')
 
+class LoginForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
 class PaymentForm(FlaskForm):
     network = SelectField('Network', choices=[('','--Select--'),('MTN', 'MTN'),('VODAFONE','VODAFONE'),('AIRTELTIGO','AIRTELTIGO')]) #Api call for all rooms
     name = StringField('Name')
@@ -30,6 +36,7 @@ class SubListingForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     price = FloatField('Price', validators=[DataRequired()])
     description = StringField('Description', validators=[DataRequired()])
+    quantity = IntegerField('Quantity')
     submit = SubmitField('Create')
 
 class UserListing(FlaskForm):
