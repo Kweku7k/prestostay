@@ -20,15 +20,15 @@
                     <br/>
 
                     <div class="flexBar"><h6>Name</h6><h6 class="text-muted">{{user.username}}</h6></div>
-                    <div class="flexBar"><h6>IndexNumber</h6><h6 class="text-muted">{{user.indexNumber}}</h6></div>
-                    <div class="flexBar"><h6>Amount Paid</h6><h6 class="text-muted">GHS {{user.paid}}</h6></div>
+                    <div class="flexBar"><h6>Student Id</h6><h6 class="text-muted">{{user.indexNumber}}</h6></div>
+                    <!-- <div class="flexBar"><h6>Amount Paid</h6><h6 class="text-muted">GHS {{user.paid}}</h6></div> -->
                     <!-- <div class="flexBar"><h6>Date Due</h6><h6 class="text-muted">undefined</h6></div> -->
                     <!-- <div class="flexBar"><h6>Status</h6><h6 class="text-muted">{{user.status}}</h6></div> -->
                     
                     <hr>
-                    <div class="flexBar"><h6>Full Amount</h6><h6 class="text-muted">GHS {{user.fullAmount}}</h6></div>
-                    <div class="flexBar"><h6>Paid</h6><h6 class="text-muted">GHS{{user.paid}}</h6></div>
-                    <div class="flexBar"><h6>Balance</h6><h6 class="text-muted">GHS {{user.balance}}</h6></div>
+                    <div class="flexBar"><h6>Amount Due</h6><h6 class="text-muted">GHS {{user.fullAmount}}</h6></div>
+                    <div class="flexBar"><h6>Amount Paid</h6><h6 class="text-muted">GHS {{user.paid}}</h6></div>
+                    <div class="flexBar"><h6>Outstanding Balance</h6><h6 class="text-muted">GHS {{user.balance}}</h6></div>
                     <!-- <div class="flexBar"><h6>Last Payment</h6><h6 class="text-muted">{{user.lastpayment}}</h6></div> -->
                     <hr>
                 
@@ -38,12 +38,12 @@
                             {{form.hidden_tag()}}
                             <div class="inputTextHolder">
                                 <h6>{{form.amount.label}}</h6>
-                                {{form.amount (class="inputTextCard", placeholder="How much are you sending")}}
+                                {{form.amount (class="inputTextCard", placeholder="Enter Amount Here")}}
                                 {% for error in form.amount.errors %}
                                 <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                                 {% endfor %}
                             </div>
-                            <h6 style="color: grey; font-weight: 700; margin-top: 1vh;">Outstanding: GHS {{user.balance}}</h6>
+                            <h6 style="color: grey; font-weight: 700; margin-top: 1vh;">Outstanding Balance: GHS {{user.balance}}</h6>
 
                             {{form.submit(class="pill-button", style="width: 100%; margin-top:5vh;")}}
                         </form>

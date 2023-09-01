@@ -335,7 +335,7 @@ def createTransaction(body):
         appId=body.get("appId"),
         username=body.get("username"),
         roomID=body.get("roomID"),
-        amount=round(body.get("amount")),
+        amount=body.get("amount"),
         listing=body.get("listing"),
         balanceBefore=body.get("balanceBefore"),
         account = body.get("account"),

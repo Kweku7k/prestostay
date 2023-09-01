@@ -15,7 +15,7 @@
                 <img src="{{url_for('static', filename='img/memoji.png')}}" style="width: 100%;" alt="" srcset="">
                 </div>
 
-                <h1 class="heading" style="text-align: center; margin-top: 5vh;">Payment Page</h1>
+                <h1 class="heading" style="text-align: center; margin-top: 5vh;">Make A Payment</h1>
 
                 <h6 style="text-align: center; width: 100%; ">
                     In order to process your payment, we need to know who you are. <br/>Enter the necessary payment information to confirm your identity.
@@ -31,10 +31,11 @@
 
                 <div class="inputTextHolder">
                     <h6>{{form.phone.label}}</h6>
-                    {{form.phone (class="inputTextCard", placeholder="Please enter your phone number")}}
+                    {{form.phone (class="inputTextCard", placeholder="02XXXXXXXX")}}
                     {% for error in form.phone.errors %}
                     <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                     {% endfor %}
+                    <h6 style="color: grey; font-weight: 100; font-size: small;">Please enter the phone number you have on record with us</h6>
                 </div>
             
                 {{form.submit(class="pill-button", style="width: 100%; margin-top:5vh;")}}
