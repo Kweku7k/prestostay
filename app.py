@@ -355,7 +355,7 @@ def createTransaction(body):
 
 def externalPay(transaction):
     print("Triggering External Pay Transaction!")
-    
+
     paymentInfo = {
         "name":transaction.username,
         "transactionId":transaction.id,
@@ -436,7 +436,7 @@ def payWithPrestoPay(transaction):
     return responseBody
 
 def confirmPrestoPayment(transaction):
-    r = requests.get(prestoUrl + '/verifykorbapayment/'+transaction.ref).json()
+    r = requests.get(prestoUrl + '/verifykorbapayment/'+str(transaction.ref)).json()
     
     app.logger.info(r)
     app.logger.info("--------------status--------------")
