@@ -361,7 +361,7 @@ def externalPay(transaction):
         "transactionId":transaction.id,
         "amount":transaction.amount,
         "currency":"GHS",
-        "reference":"transaction.reference",
+        "reference":transaction.username,
         "charges":0.03,
         "callbackUrl":baseUrl+"/confirm/"+str(transaction.id)
     }
