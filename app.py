@@ -913,7 +913,6 @@ def confirm(transactionId):
     print(request.url)
     print("-------------- CALLBACK DATA --------------- ")
     print(request.json)
-    # print(request.args.items())
 
     message = "In Progress"
 
@@ -923,7 +922,10 @@ def confirm(transactionId):
         print("Attempting to update transaction id: " + str(transaction.id) + " with prestoRef ")
         transactionRef = body["transactionId"]
         print(transactionRef)
+
         transaction.ref = transactionRef
+        transaction.account = body.get("account")
+
         db.session.commit()
     except Exception as e:
         print(e)
