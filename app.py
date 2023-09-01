@@ -920,7 +920,7 @@ def confirm(transactionId):
     transaction = Transactions.query.get_or_404(transactionId)
     body = request.json
     try:
-        print("Attempting to update transaction id: " + transaction.id + " with prestoRef: " + body)
+        print("Attempting to update transaction id: " + str(transaction.id) + " with prestoRef: " + body)
         transactionRef = body["transactionId"]
         print(transactionRef)
         transaction.ref = transactionRef
