@@ -913,7 +913,7 @@ def confirm(transactionId):
     print(request.url)
     print("-------------- CALLBACK DATA --------------- ")
     print(request.json)
-    print(request.args.items())
+    # print(request.args.items())
 
     message = "In Progress"
 
