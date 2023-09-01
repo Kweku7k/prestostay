@@ -335,7 +335,7 @@ def createTransaction(body):
         appId=body.get("appId"),
         username=body.get("username"),
         roomID=body.get("roomID"),
-        amount=body.get("amount"),
+        amount=round(body.get("amount")),
         listing=body.get("listing"),
         balanceBefore=body.get("balanceBefore"),
         account = body.get("account"),
@@ -435,25 +435,29 @@ def payWithPrestoPay(transaction):
         "transactionId":transaction.id,
         "orderId":prestoUrl+transaction.ref,
         "merchantID" : merchantID ,
-        "description" : "Buying "+ str(transaction.amount) +" votes for "+ str(user.username) + " " + str(transaction.listing) + " election.",
+        "description" : "Paying "+ str(transaction.amount) +" for "+ str(user.username) + " in " + str(transaction.listing) + ".",
         "callbackUrl" :  baseUrl+str(transaction.id)
     }
 
     return responseBody
 
 def confirmPrestoPayment(transaction):
-    r = requests.get(prestoUrl + '/verifykorbapayment/'+str(transaction.ref)).json()
+    r = None
+    try:
+        r = requests.get(prestoUrl + '/verifykorbapayment/'+str(transaction.ref)).json()
+    except Exception as e:
+        print(e)
     
     print(r)
     print("--------------status--------------")
-    status = r.get("status")
+    status = r.get("status", "failed")
     print(status)
 
 
     print("--------------server--------------")
     print(server)
 
-    if status == 'success' or environment == 'DEV' and server == "LOCAL":
+    if status == 'success' or environment == 'DEV' and server == "LOCAL" or transaction.channel == 'BANK':
 
         print("Attempting to update transctionId: " +str(transaction.id) + " to paid! in " + environment + "environment || SERVER:" + server)
         
@@ -490,9 +494,9 @@ def updateUserBalance(transaction):
     except Exception as e:
         app.logger.error(e)
         reportError(str(e))
-        app.logger.error("Couldnt create vote for " + transaction.username)
+        app.logger.error("Couldnt create ledgerEntry for " + transaction.username)
 
-    try: #Attatch vote to candidate
+    try: #SET UP DECIMAL POINTS
         user = User.query.get_or_404(int(transaction.userId))
         listing = Listing.query.filter_by(slug = user.listingSlug).first()
         
@@ -915,23 +919,26 @@ def confirm(transactionId):
     print(request.json)
 
     message = "In Progress"
-
     transaction = Transactions.query.get_or_404(transactionId)
-    body = request.json
-    try:
-        print("Attempting to update transaction id: " + str(transaction.id) + " with prestoRef ")
-        transactionRef = body["transactionId"]
-        print(transactionRef)
-
-        transaction.ref = transactionRef
-        transaction.account = body.get("account")
-
-        db.session.commit()
-    except Exception as e:
-        print(e)
+    # SECURE THIS ROUTE
 
     if transaction.paid == False:
+        body = request.json
+        try:
+            print("Attempting to update transaction id: " + str(transaction.id) + " with prestoRef ")
+            transactionRef = body["transactionId"]
+            print(transactionRef)
+
+            transaction.ref = transactionRef
+            transaction.account = body.get("account")
+            transaction.channel = body.get("channel")
+
+            db.session.commit()
+        except Exception as e:
+            print(e)
+
         message = "Failed Transaction"
+
         if confirmPrestoPayment(transaction) == True:
 
             message = "Duplicate"
@@ -944,7 +951,7 @@ def confirm(transactionId):
                 print("send_sms || PrestoStay)")
                 send_sms(transaction.account, message)
 
-                responseMessage = transaction.listing + "\nSuccessfully bought " +str(transaction.amount) + " for " + str(transaction.username) + "." + "\nBefore: " + str(transaction.balanceBefore) + "\nAfter: "+ str(transaction.balanceAfter) + "\nTransactionId:" + str(transaction.id) + "\nAccount:" + str(transaction.network) + " : "+ str(transaction.account) + "\nVoteId: " + str(entry.id)
+                responseMessage = transaction.listing + "\nSuccessfully bought " +str(transaction.amount) + " for " + str(transaction.username) + "." + "\nBefore: " + str(transaction.balanceBefore) + "\nAfter: "+ str(transaction.balanceAfter) + "\nTransactionId:" + str(transaction.id) + "\nAccount:" + str(transaction.network) + " : "+ str(transaction.account) + "\LedgerId: " + str(entry.id)
                 print(responseMessage)
                 print(responseMessage)
                 sendTelegram(responseMessage)
@@ -1063,7 +1070,7 @@ def upload(listing="Pronto Hostel"):
 @app.route('/transactions/<int:userId>', methods=['GET', 'POST'])
 def usertransactions(userId):
     user = User.query.get_or_404(userId)
-    transactions = Transactions.query.filter_by(userId = str(user.id)).all()
+    transactions = Transactions.query.filter_by(userId = str(user.id), paid=True).all()
     print(transactions)
     return render_template('alltransactions.html', user=user,transactions=transactions)
 
