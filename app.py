@@ -354,6 +354,8 @@ def createTransaction(body):
     return newTransaction
 
 def externalPay(transaction):
+    print("Triggering External Pay Transaction!")
+    
     paymentInfo = {
         "name":transaction.username,
         "transactionId":transaction.id,
@@ -364,8 +366,11 @@ def externalPay(transaction):
         "callbackUrl":baseUrl+"/confirm/"+str(transaction.id)
     }
 
+    print(paymentInfo)
+
     response = requests.post(prestoUrl+"/externalpay/"+transaction.appId, json=paymentInfo)
     print(response)
+    print(response.json())
     return response.json()
 
 
