@@ -359,9 +359,9 @@ def externalPay(transaction):
         "transactionId":transaction.id,
         "amount":transaction.amount,
         "currency":"GHS",
-        "reference":transaction.reference,
+        "reference":"transaction.reference",
         "charges":0.03,
-        "callbackUrl":baseUrl+"/confirm/"+transaction.id
+        "callbackUrl":baseUrl+"/confirm/"+str(transaction.id)
     }
 
     response = requests.post(prestoUrl+"/externalpay/"+transaction.appId, json=paymentInfo)
