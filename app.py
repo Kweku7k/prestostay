@@ -909,11 +909,18 @@ def verifyTransaction(transactionid):
 
 @app.route('/confirm/<string:transactionId>', methods=['GET', 'POST'])
 def confirm(transactionId):
+    print("-------------- CALLBACK RECIEVED --------------- ")
+    print(request.url)
+    print("-------------- CALLBACK DATA --------------- ")
+    print(request.json)
+    print(request.args.items())
+
     message = "In Progress"
 
     transaction = Transactions.query.get_or_404(transactionId)
     body = request.json
     try:
+        print("Attempting to update transaction id: " + transaction.id + " with prestoRef: " + body)
         transactionRef = body["transactionId"]
         print(transactionRef)
         transaction.ref = transactionRef
