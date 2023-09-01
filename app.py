@@ -368,7 +368,13 @@ def externalPay(transaction):
 
     print(paymentInfo)
 
-    response = requests.post(prestoUrl+"/externalpay/"+transaction.appId, json=paymentInfo)
+    try:    
+        response = requests.post(prestoUrl+"/externalpay/"+transaction.appId, json=paymentInfo)
+        transaction.ref = response.json()["transactionId"]
+    except Exception as e:
+        print(e)
+        print("Creating External Transaction failed!")
+
     print(response)
     print(response.json())
     return response.json()
