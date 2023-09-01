@@ -15,11 +15,11 @@ class LoginForm(FlaskForm):
 
 
 class PaymentForm(FlaskForm):
-    network = SelectField('Network', choices=[('','--Select--'),('MTN', 'MTN'),('VODAFONE','VODAFONE'),('AIRTELTIGO','AIRTELTIGO')]) #Api call for all rooms
+    # network = SelectField('Network', choices=[('','--Select--'),('MTN', 'MTN'),('CARD', 'CARD'),('VODAFONE','VODAFONE'),('AIRTELTIGO','AIRTELTIGO')]) #Api call for all rooms
     name = StringField('Name')
     amount = StringField('Amount', validators=[DataRequired()])
     indexNumber = StringField('Index Number')
-    account = StringField('Phone', validators=[DataRequired(), Length(min=10, max=15, message="Your phone number should be more than 10 digits and less than 15")])
+    # account = StringField('Phone', validators=[Length(min=10, max=15, message="Your phone number should be more than 10 digits and less than 15")])
     note = StringField('Leave A Note.')
     submit = SubmitField('Proceed')
 

@@ -32,12 +32,14 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 prestoUrl = "https://prestoghana.com"
-baseUrl = "stay.prestoghana.com"
-merchantID = "x"
+baseUrl = "https://stay.prestoghana.com"
+
+merchantID = "ec5fb5b5-2b80-4a9a-b522-24c90912f106"
 
 environment = os.environ["ENVIRONMENT"]
 # This value confirms the server is not null
-server = os.environ["SERVER"]
+# server = os.environ["SERVER"]
+server = "SERVER"
 
 
 #  ----- LOGIN MANAGER
@@ -351,6 +353,22 @@ def createTransaction(body):
 
     return newTransaction
 
+def externalPay(transaction):
+    paymentInfo = {
+        "name":transaction.username,
+        "transactionId":transaction.id,
+        "amount":transaction.amount,
+        "currency":"GHS",
+        "reference":transaction.reference,
+        "charges":0.03,
+        "callbackUrl":baseUrl+"/confirm/"+transaction.id
+    }
+
+    response = requests.post(prestoUrl+"/externalpay/"+transaction.appId, json=paymentInfo)
+    print(response)
+    return response.json()
+
+
 def payWithPrestoPay(transaction):
 # TODO: Edit to trigger accurate payment
 # find user?
@@ -368,7 +386,7 @@ def payWithPrestoPay(transaction):
             "total":0.10,
             "recipient":"external", #TODO:Change!
             "percentage":"3",
-            "callbackUrl":prestoUrl+"/confirm/"+str(transaction.id),#TODO: UPDATE THIS VALUE
+            "callbackUrl":baseUrl+"/verifyTransaction/"+str(transaction.id),#TODO: UPDATE THIS VALUE
             "firstName":user.username,
             "network":transaction.network
         }
@@ -399,7 +417,7 @@ def payWithPrestoPay(transaction):
         app.logger.info(transaction.network)
         # transaction = korbaCheckout(candidate, amount, phone)
         description = "Paying GHS"+ str(transaction.amount) +" to "+ str(transaction.listing) + " for "+str(transaction.username) + "."
-        callbackUrl = baseUrl+str(transaction.id)
+        callbackUrl = baseUrl+"/"+str(transaction.id)
         app.logger.info(callbackUrl)
         
     responseBody = {
@@ -763,8 +781,6 @@ def findme():
         # return render_template('confirmUser.html', user=user, form=form)
     return render_template('pay.html', current_user=None, form=form)
 
-# YET TO  BE WORKED ON!
-
 @app.route('/pay/<int:userId>', methods=['GET','POST'])
 def pay(userId):
     user = User.query.get_or_404(userId)
@@ -781,17 +797,27 @@ def pay(userId):
                 "listing":user.listing,
                 "amount":form.amount.data,
                 "balanceBefore":user.balance,
-                "account":form.account.data, 
-                "network":form.network.data,
+                # "account":form.account.data, 
+                # "network":form.network.data,
                 "channel":"WEB"
             }
 
             transaction = createTransaction(body)
 
-            response = payWithPrestoPay(transaction)
-            print(response)
+            response = externalPay(transaction)
 
-            return redirect(url_for('transaction', transactionId=transaction.id))
+            return redirect(response["url"])
+
+            # response = payWithPrestoPay(transaction)
+            # print(response)
+
+            # if body["network"] == "CARD":
+            #     return render_template('paywithkorba.html', 
+            #                            orderId = body["username"], amount=body["amount"], callbackUrl=response["callbackUrl"], merchantID=merchantID, description=response["description"])
+            
+            # else:
+            #     return redirect(url_for('transaction', transactionId=transaction.id))
+
         else:
             print(form.errors)
             flash(form.errors[0])

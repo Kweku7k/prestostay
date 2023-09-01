@@ -45,20 +45,6 @@
                             </div>
                             <h6 style="color: grey; font-weight: 700; margin-top: 1vh;">Outstanding: GHS {{user.balance}}</h6>
 
-                            <div class="inputTextHolder">
-                                <h6>{{form.network.label}}</h6>
-                                {{form.network (class="inputTextCard", placeholder="How much are you sending")}}
-                                {% for error in form.network.errors %}
-                                <h6 style="color: red; font-weight: 100;">{{error}}</h6>
-                                {% endfor %}
-                            </div>
-                            <div class="inputTextHolder">
-                                <h6>{{form.account.label}}</h6>
-                                {{form.account (class="inputTextCard", placeholder="How much are you sending")}}
-                                {% for error in form.account.errors %}
-                                <h6 style="color: red; font-weight: 100;">{{error}}</h6>
-                                {% endfor %}
-                            </div>
                             {{form.submit(class="pill-button", style="width: 100%; margin-top:5vh;")}}
                         </form>
                     {% endif %}
