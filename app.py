@@ -404,12 +404,12 @@ def payWithPrestoPay(transaction):
 
     response = requests.post(prestoUrl+"/korba", json=paymentInfo)
 
-    app.logger.info("-----prestoPay------")
-    app.logger.info(paymentInfo)
-    app.logger.info(prestoUrl)
+    print("-----prestoPay------")
+    print(paymentInfo)
+    print(prestoUrl)
     status = response
     status = response.status_code
-    app.logger.info(status)
+    print(status)
  
     try:
         transaction.ref = response.json()["transactionId"]
@@ -417,19 +417,19 @@ def payWithPrestoPay(transaction):
         transaction.prestoTransactionId = response.json()["transactionId"]
         db.session.commit()
     except Exception as e:
-        app.logger.info("e")
-        app.logger.info(e)
-        app.logger.info("Couldnt set transaction reference!")
+        print("e")
+        print(e)
+        print("Couldnt set transaction reference!")
 
     # if transaction.network == "CARD"
 
     if transaction.network == 'CARD':
                 # create korba - presto transaction here and assign to orderId
-        app.logger.info(transaction.network)
+        print(transaction.network)
         # transaction = korbaCheckout(candidate, amount, phone)
         description = "Paying GHS"+ str(transaction.amount) +" to "+ str(transaction.listing) + " for "+str(transaction.username) + "."
         callbackUrl = baseUrl+"/"+str(transaction.id)
-        app.logger.info(callbackUrl)
+        print(callbackUrl)
         
     responseBody = {
         "transactionId":transaction.id,
@@ -444,18 +444,18 @@ def payWithPrestoPay(transaction):
 def confirmPrestoPayment(transaction):
     r = requests.get(prestoUrl + '/verifykorbapayment/'+str(transaction.ref)).json()
     
-    app.logger.info(r)
-    app.logger.info("--------------status--------------")
+    print(r)
+    print("--------------status--------------")
     status = r.get("status")
-    app.logger.info(status)
+    print(status)
 
 
-    app.logger.info("--------------server--------------")
-    app.logger.info(server)
+    print("--------------server--------------")
+    print(server)
 
     if status == 'success' or environment == 'DEV' and server == "LOCAL":
 
-        app.logger.info("Attempting to update transctionId: " +str(transaction.id) + " to paid! in " + environment + "environment || SERVER:" + server)
+        print("Attempting to update transctionId: " +str(transaction.id) + " to paid! in " + environment + "environment || SERVER:" + server)
         
         # findtrasaction, again because of the lag.
         state = Transactions.query.get_or_404(transaction.id)
@@ -463,10 +463,10 @@ def confirmPrestoPayment(transaction):
             try:
                 state.paid = True
                 db.session.commit()
-                app.logger.info("Transaction : "+str(transaction.id) + " has been updated to paid!")
+                print("Transaction : "+str(transaction.id) + " has been updated to paid!")
 
             except Exception as e:
-                app.logger.info("Failed to update transctionId: "+str(transaction.id )+ " to paid!")
+                print("Failed to update transctionId: "+str(transaction.id )+ " to paid!")
                 app.logger.error(e)
                 reportError(e)
 
@@ -474,7 +474,7 @@ def confirmPrestoPayment(transaction):
         return False
 
     else:
-        app.logger.info(str(transaction.id) + " has failed.")
+        print(str(transaction.id) + " has failed.")
         return False
 
 def updateUserBalance(transaction):
@@ -502,8 +502,8 @@ def updateUserBalance(transaction):
         listing.amountRecieved += newLedgerEntry.amount
         listing.amountDue -= newLedgerEntry.amount
 
-        app.logger.info("----------------------- Updating balance ---------------------------")
-        app.logger.info("Attempting to update " + user.username + " balance from " + str(transaction.balanceBefore) + " to " + str(transaction.balanceAfter))
+        print("----------------------- Updating balance ---------------------------")
+        print("Attempting to update " + user.username + " balance from " + str(transaction.balanceBefore) + " to " + str(transaction.balanceAfter))
         sendTelegram("Attempting to update " + user.username + " balance from " + str(transaction.balanceBefore) + " to " + str(transaction.balanceAfter))
         
         user.balance -= newLedgerEntry.amount
@@ -513,7 +513,7 @@ def updateUserBalance(transaction):
 
         db.session.commit()
 
-        app.logger.info("----------------------- Updated Successfully! ---------------------------")
+        print("----------------------- Updated Successfully! ---------------------------")
 
     except Exception as e:
         app.logger.error("Updating user " + user.username + " balance has failed." )
@@ -912,6 +912,14 @@ def confirm(transactionId):
     message = "In Progress"
 
     transaction = Transactions.query.get_or_404(transactionId)
+    body = request.json
+    try:
+        transactionRef = body["transactionId"]
+        print(transactionRef)
+        transaction.ref = transactionRef
+        db.session.commit()
+    except Exception as e:
+        print(e)
 
     if transaction.paid == False:
         message = "Failed Transaction"
@@ -924,12 +932,12 @@ def confirm(transactionId):
                 
                 message = "Student Name:"+ str(transaction.username) + "\nHostel Name: "+transaction.listing + "\nAmount:" + str(transaction.amount) + "\nPayment Method:"+transaction.channel + "\nPayment  Date" + transaction.date_created.strftime("%Y-%m-%d %H:%M:%S") + "\nReceipt Number: PRS" + str(transaction.id) + "REF" + str(transaction.ref) +"\nYour payment has been received successfully!."
 
-                app.logger.info("send_sms || PrestoStay)")
+                print("send_sms || PrestoStay)")
                 send_sms(transaction.account, message)
 
                 responseMessage = transaction.listing + "\nSuccessfully bought " +str(transaction.amount) + " for " + str(transaction.username) + "." + "\nBefore: " + str(transaction.balanceBefore) + "\nAfter: "+ str(transaction.balanceAfter) + "\nTransactionId:" + str(transaction.id) + "\nAccount:" + str(transaction.network) + " : "+ str(transaction.account) + "\nVoteId: " + str(entry.id)
                 print(responseMessage)
-                app.logger.info(responseMessage)
+                print(responseMessage)
                 sendTelegram(responseMessage)
                 flash(f'This transaction was successful! You should recieve and sms.')
             else:
@@ -944,7 +952,7 @@ def confirm(transactionId):
         "prestoTransactionId":transaction.ref,
         "paid":transaction.paid
     }
-    app.logger.info(responseBody)
+    print(responseBody)
     return responseBody
 
 
