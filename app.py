@@ -457,6 +457,9 @@ def confirmPrestoPayment(transaction):
     print("--------------server--------------")
     print(server)
 
+    print("--------------transaction channel--------------")
+    print(transaction.channel)
+
     if status == 'success' or environment == 'DEV' and server == "LOCAL" or transaction.channel == 'BANK':
 
         print("Attempting to update transctionId: " +str(transaction.id) + " to paid! in " + environment + "environment || SERVER:" + server)
