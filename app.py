@@ -835,11 +835,12 @@ def findme():
     print(form.data)
     if form.validate_on_submit():
         phoneNumber = form.phone.data.replace(" ", "")[-9:] 
-        
+
         print("phoneNumber")
         print(phoneNumber)
 
         user = User.query.filter(User.phone.endswith(phoneNumber)).first()
+        listing = Listing.query.filter_by(slug=list)
         
         print(user)
         if user is None:
