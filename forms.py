@@ -4,8 +4,8 @@ from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationE
 from wtforms.widgets import TextArea
 
 class FindUser(FlaskForm):
-    hostel = SelectField('Hostel', choices=[('Pronto Hostel', 'Pronto Hostel')]) #Api call for all rooms
-    phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=15, message="Your phone number should be more than 10 digits and less than 15")])
+    hostel = SelectField('Hostel', choices=[('CU Female Annex', 'CU Female Annex')]) #Api call for all rooms
+    phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
     submit = SubmitField('Proceed')
 
 class LoginForm(FlaskForm):
@@ -15,11 +15,10 @@ class LoginForm(FlaskForm):
 
 
 class PaymentForm(FlaskForm):
-    # network = SelectField('Network', choices=[('','--Select--'),('MTN', 'MTN'),('CARD', 'CARD'),('VODAFONE','VODAFONE'),('AIRTELTIGO','AIRTELTIGO')]) #Api call for all rooms
     name = StringField('Name')
     amount = StringField('Transaction Amount', validators=[DataRequired()])
     indexNumber = StringField('Index Number')
-    # account = StringField('Phone', validators=[Length(min=10, max=15, message="Your phone number should be more than 10 digits and less than 15")])
+    # account = StringField('Phone', validators=[Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
     note = StringField('Leave A Note.')
     submit = SubmitField('Proceed')
 
@@ -45,7 +44,7 @@ class UserListing(FlaskForm):
 
 class ProfileForm(FlaskForm):
     username = StringField('Name', validators=[DataRequired()])
-    phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=15, message="Your phone number should be more than 10 digits and less than 15")])
+    phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
     email = StringField('Email', validators=[DataRequired()])
     indexNumber = StringField('Index Number', validators=[DataRequired()])
     listing = StringField('Listing', validators=[DataRequired()])
@@ -58,7 +57,7 @@ class ProfileForm(FlaskForm):
 
 class OnboardForm(FlaskForm):
     username = StringField('Name', validators=[DataRequired()])
-    phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=15, message="Your phone number should be more than 10 digits and less than 15")])
+    phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
     email = StringField('Email', validators=[DataRequired()])
     listing = SelectField('Listing', choices=[]) #Api call for all rooms
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])

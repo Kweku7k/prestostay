@@ -45,8 +45,8 @@
     <div class="col-md-3 col-6">
         <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
             <div data-aos="fade-up" class="card">
-                <h6>Todays Balance</h6>
-                <h2 style="font-weight: 700;">GHS {{todaysBalance}}</h2>
+                <h6>Cash Transactions</h6>
+                <h2 style="font-weight: 700;">GHS {{cashTransactions}}</h2>
                 <!-- <h6 class="text-muted">{{totalTodayTransactions}} Transaction(s)</h6> -->
             </div>
         </a>
@@ -146,7 +146,7 @@
             <h4>Occupancy Summary</h4>
             <h6 class="text-muted">{{listing.name}}</h6>
         </div>
-            <a href="{{url_for('upload')}}">
+            <a href="{{url_for('upload', dataType='users')}}">
                 <button class="pill-button">Update Values</button>
             </a>
     </div>

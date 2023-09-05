@@ -529,6 +529,49 @@ def updateUserBalance(transaction):
 
     return newLedgerEntry
 
+
+def changeToDateTime(date_string):
+    date_format = "%m/%d/%Y"
+    # Use datetime.strptime to parse the string and convert it to a datetime object
+    date_obj = datetime.strptime(date_string, date_format)
+
+def uploadTransactions(filename):
+    csv_file_path = filename  # Replace with the path to your CSV file
+    message = "All Transactions were updated successfully!"
+
+    with open(csv_file_path, 'r', newline='') as csvfile:
+        csv_reader = csv.DictReader(csvfile)
+        disimilarNames = []
+        
+        for row in csv_reader:
+            print(row)
+            print("====================================")
+            print("Updating Data For " + row["Full Name"])
+
+            try:
+                transaction = Transactions(appId=row["listingSlug"], username=row["Full Name"], amount=row["Amount Paid"], channel = row["Payment Method"], paid=True  )
+                users = User.query.filter_by(username=transaction.username)
+                print(users.all())
+                print(users.count())
+
+                transaction.date = datetime.datetime.strptime(row["Date of Transaction"], "%m/%d/%Y")
+
+                if users.count() != 1:
+                    disimilarNames.append(row["Full Name"])
+                else:
+                    db.session.add(transaction)
+            except Exception as e:
+                message = "There seems to have been an issue with the upload"
+                print(e)
+        
+        print(disimilarNames)
+
+            
+
+        db.session.commit()
+            
+    return message
+
 def uploadData(filename):
     csv_file_path = filename  # Replace with the path to your CSV file
     message = "New Users updated successfully!"
@@ -543,7 +586,7 @@ def uploadData(filename):
             print(row)
 
             try:
-                user = User(username = row["Name"], password = "0000",email = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+row["Number"]+"@prestoghana.com", phone = row["Number"], indexNumber=row["Index Number"], listing="Pronto Hostel", paid=row["Paid"], roomNumber=row["Room Number"], fullAmount=row["Full Amount"], balance=row["Balance"], listingSlug=row["listingSlug"] )
+                user = User(username = row["Name"], password = "0000",email = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+row["Number"]+"@prestoghana.com", phone = row["Number"], indexNumber=row["Index Number"], listing=row["Listing"], paid=row["Paid"], roomNumber=row["Room Number"], fullAmount=row["Full Amount"], balance=row["Balance"], listingSlug=row["listingSlug"] )
                 db.session.add(user)
             except Exception as e:
                 message = "There seems to have been an issue with the upload"
@@ -789,12 +832,23 @@ def onboard():
 @app.route('/findme', methods=['GET', 'POST'])
 def findme():
     form = FindUser()
+    print(form.data)
     if form.validate_on_submit():
-        user = User.query.filter_by(phone = form.phone.data).first()
+        phoneNumber = form.phone.data.replace(" ", "")[-9:] 
+        print("phoneNumber")
+        print(phoneNumber)
+        # user = User.query.filter_by(phone = "0" + form.phone.data[-9]).first()
+        # user = User.query.filter_by(phone = "0" + form.phone.data[-9]).first()
+        user = User.query.filter(User.phone.endswith(phoneNumber)).first()
+        
+        print(user)
+        print(user.phone)
+
 
         if user is None:
             flash(f'We couldnt find anyone with this phone number.')
             return redirect(url_for('findme'))
+        
         return redirect(url_for('pay', userId=user.id))
         # return render_template('confirmUser.html', user=user, form=form)
     return render_template('pay.html', current_user=None, form=form)
@@ -935,7 +989,6 @@ def confirm(transactionId):
             transaction.ref = transactionRef
             transaction.account = body.get("account")
             transaction.channel = body.get("channel")
-
             db.session.commit()
         except Exception as e:
             print(e)
@@ -1011,7 +1064,11 @@ def dashboard():
     expected_revenue = listing.expectedRevenue
     due = expected_revenue - amountRecieved
     totalTransasactions = 20
-    # todaysBalance = 20
+    bankTransactions = Transactions.query.filter_by(channel="BANK", paid=True).all()
+    
+    cashTransactions = 0
+    for c in bankTransactions:
+        cashTransactions += c.amount
 
     sublistings = SubListing.query.filter_by(listingSlug=listing.slug).count()
 
@@ -1028,12 +1085,12 @@ def dashboard():
     occupied = 0
     
     print(activeUsers)
-    return render_template('dashboard.html', user=current_user, occupied=occupied,sublistings=sublistings, totalTodayTransactions=totalTodayTransactions,listing=listing, activeUsers=activeUsers, totalTransasactions=totalTransasactions,todaysBalance=todaysBalance,amountRecieved=amountRecieved, due=due,expected_revenue=expected_revenue)
+    return render_template('dashboard.html', cashTransactions=cashTransactions ,user=current_user, occupied=occupied,sublistings=sublistings, totalTodayTransactions=totalTodayTransactions,listing=listing, activeUsers=activeUsers, totalTransasactions=totalTransasactions,todaysBalance=todaysBalance,amountRecieved=amountRecieved, due=due,expected_revenue=expected_revenue)
 
 
 
-@app.route('/upload', methods=['GET', 'POST'])
-def upload(listing="Pronto Hostel"):
+@app.route('/upload/<string:dataType>', methods=['GET', 'POST'])
+def upload(listing="Pronto Hostel", dataType = None):
     listing = Listing.query.get_or_404(1)
     users = User.query.filter_by(listingSlug=listing.slug).all()
     if request.method == 'POST':
@@ -1061,8 +1118,12 @@ def upload(listing="Pronto Hostel"):
             f.write(csv_content)
 
         flash(f"CSV file uploaded and saved as {filename}")
-    
-        message = uploadData(save_path)
+
+        if dataType == "transactions":
+            message = uploadTransactions(save_path)
+        elif dataType == "users":
+            message = uploadData(save_path)
+
         print(message)
 
         return redirect(url_for('dashboard'))
