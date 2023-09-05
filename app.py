@@ -835,16 +835,13 @@ def findme():
     print(form.data)
     if form.validate_on_submit():
         phoneNumber = form.phone.data.replace(" ", "")[-9:] 
+        
         print("phoneNumber")
         print(phoneNumber)
-        # user = User.query.filter_by(phone = "0" + form.phone.data[-9]).first()
-        # user = User.query.filter_by(phone = "0" + form.phone.data[-9]).first()
+
         user = User.query.filter(User.phone.endswith(phoneNumber)).first()
         
         print(user)
-        print(user.phone)
-
-
         if user is None:
             flash(f'We couldnt find anyone with this phone number.')
             return redirect(url_for('findme'))
