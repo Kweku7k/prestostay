@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Google Maps Example</title>
+    <title>Presto Stay Radar</title>
     <!-- Include the Google Maps JavaScript API -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDogykzsED0WEAYB079CynpoPi9cUe-tOE"></script>
     <style>
@@ -16,25 +16,70 @@
     <!-- <h1>My Google Map</h1> -->
     <!-- Create a div to hold the map -->
     <div id="map"></div>
+    <div>
+        Hello
+    </div>
 
     <script>
         // Initialize the map
+
+        var markerIcon = {
+                        url: "../static/img/user.png", // Replace with the URL of your custom image
+                        scaledSize: new google.maps.Size(40, 40), // Adjust the size as needed
+                    };
+
         function initMap() {
-            // Specify the coordinates for the map center
-            var myLatLng = { lat: 37.7749, lng: -122.4194 }; // Example: San Francisco, CA
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    // Get the user's current latitude and longitude
+                    var userLat = position.coords.latitude;
+                    var userLng = position.coords.longitude;
 
-            // Create a map object and specify the DOM element to display it in
-            var map = new google.maps.Map(document.getElementById('map'), {
-                center: myLatLng,
-                zoom: 12 // Adjust the zoom level as needed
-            });
+                    // Create a map object and set the center to the user's location
+                    var map = new google.maps.Map(document.getElementById('map'), {
+                        center: { lat: userLat, lng: userLng },
+                        zoom: 12 // Adjust the zoom level as needed
+                    });
 
-            // Create a marker and set its position
-            var marker = new google.maps.Marker({
-                map: map,
-                position: myLatLng,
-                title: 'Presto Stay Radar' // Optional title for the marker
-            });
+                    // Create a marker for the user's location
+                    var userMarker = new google.maps.Marker({
+                        position: { lat: userLat, lng: userLng },
+                        map: map,
+                        icon: markerIcon,
+                        title: 'Your Location'
+                    });
+                });
+            } else {
+                // Geolocation is not available, handle this case
+                alert('Geolocation is not supported by your browser.');
+            }
+            // Array of places with their coordinates and names
+            var places = [
+                { lat: 5.733738422393799, lng: 0.10382991284132004, name: 'Pronto Hostel' },
+                { lat: 34.0522, lng: -118.2437, name: 'Los Angeles' },
+                { lat: 40.7128, lng: -74.0060, name: 'New York City' }
+                // Add more places as needed
+            ];
+
+
+            
+
+            // var userMarker = new google.maps.Marker({
+            //     position: { lat: userLat, lng: userLng },
+            //     map: map,
+            //     icon: markerIcon,
+            //     title: 'Currrent Location'
+            // });
+
+            // Loop through the places array and create a marker for each place
+            for (var i = 0; i < places.length; i++) {
+                var place = places[i];
+                var marker = new google.maps.Marker({
+                    position: { lat: place.lat, lng: place.lng },
+                    map: map,
+                    title: place.name
+                });
+            }
         }
 
         // Call the initMap function when the page loads
