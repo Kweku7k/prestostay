@@ -663,7 +663,7 @@ def index():
 
 @app.route('/')
 def landingPage():
-    return render_template('landingpage.html')
+    return render_template('landingpage.html', loadingMessage = "Loading!")
 
 @app.route('/preview', methods=['GET', 'POST'])
 def preview():
