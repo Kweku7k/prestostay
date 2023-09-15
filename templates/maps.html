@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Maps Example</title>
+    <!-- Include the Google Maps JavaScript API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+    <style>
+        /* Set the size of the map container */
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0;">
+    <!-- <h1>My Google Map</h1> -->
+    <!-- Create a div to hold the map -->
+    <div id="map"></div>
+
+    <script>
+        // Initialize the map
+        function initMap() {
+            // Specify the coordinates for the map center
+            var myLatLng = { lat: 37.7749, lng: -122.4194 }; // Example: San Francisco, CA
+
+            // Create a map object and specify the DOM element to display it in
+            var map = new google.maps.Map(document.getElementById('map'), {
+                center: myLatLng,
+                zoom: 12 // Adjust the zoom level as needed
+            });
+
+            // Create a marker and set its position
+            var marker = new google.maps.Marker({
+                map: map,
+                position: myLatLng,
+                title: 'My Marker' // Optional title for the marker
+            });
+        }
+
+        // Call the initMap function when the page loads
+        google.maps.event.addDomListener(window, 'load', initMap);
+    </script>
+</body>
+</html>

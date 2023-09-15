@@ -829,6 +829,10 @@ def onboard():
         print(form.errors)
     return render_template('onboard.html', form=form, title="Onboard New User")
 
+@app.route('/maps', methods=['GET', 'POST'])
+def maps():
+    return render_template('maps.html')
+
 @app.route('/findme', methods=['GET', 'POST'])
 def findme():
     form = FindUser()
@@ -840,7 +844,7 @@ def findme():
         print(phoneNumber)
 
         user = User.query.filter(User.phone.endswith(phoneNumber)).first()
-        listing = Listing.query.filter_by(slug=list)
+        listing = Listing.query.filter_by(slug="")
         
         print(user)
         if user is None:
