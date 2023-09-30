@@ -74,24 +74,6 @@
       </div>
 
 
-    <!-- <script>
-      function showLoadingScreen() {
-        document.getElementById("loading").style.display = "flex"
-      }
-    </script> -->
-
-<!-- <script>
-  // Show loader when the page starts loading
-    document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('loading').style.display = 'flex';
-    });
-
-  // Hide loader when the page is fully loaded
-    window.addEventListener('load', function() {
-      document.getElementById('loading').style.display = 'none';
-    });
-</script> -->
-
 <script>
     document.getElementById("loading").style.display = "flex"
 
@@ -99,11 +81,19 @@
   function onDOMReady() {
       // alert("DOM content is ready!");
       document.getElementById("loading").style.display = "none"
-
   }
 
-  // Attach the function to the DOMContentLoaded event
+  // Attach the function to the DOMContentLoaded evååent
   document.addEventListener("DOMContentLoaded", onDOMReady);
+</script>
+
+<script>
+  function showLoadingScreen() {
+    console.log("Firing loader")
+    console.log(document.getElementById("loading"))
+    document.getElementById("loading").style.display = "flex"
+    console.log(document.getElementById("loading").style.display)
+  }
 </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>

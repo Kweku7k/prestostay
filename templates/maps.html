@@ -1,20 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Presto Stay Radar</title>
+    <title>{{mapsApiKey}}</title>
     <!-- Include the Google Maps JavaScript API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDogykzsED0WEAYB079CynpoPi9cUe-tOE"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{mapsApiKey}}"></script>
     <style>
         /* Set the size of the map container */
         #map {
-            height: 100vh;
+            height: 80vh;
             width: 100%;
         }
     </style>
 </head>
 <body style="margin: 0; padding: 0;">
-    <!-- <h1>My Google Map</h1> -->
-    <!-- Create a div to hold the map -->
     <div id="map"></div>
     <div>
         Hello
@@ -27,7 +25,7 @@
 
         var markerIcon = {
                         url: "../static/img/user.png", // Replace with the URL of your custom image
-                        scaledSize: new google.maps.Size(40, 40), // Adjust the size as needed
+                        scaledSize: new google.maps.Size(60, 60), // Adjust the size as needed
                     };
 
         function initMap() {
@@ -40,7 +38,7 @@
                     // Create a map object and set the center to the user's location
                     var map = new google.maps.Map(document.getElementById('map'), {
                         center: { lat: userLat, lng: userLng },
-                        zoom: 12 // Adjust the zoom level as needed
+                        zoom: 20 // Adjust the zoom level as needed
                     });
 
                     // Create a marker for the user's location
@@ -64,14 +62,6 @@
             ];
 
 
-            
-
-            // var userMarker = new google.maps.Marker({
-            //     position: { lat: userLat, lng: userLng },
-            //     map: map,
-            //     icon: markerIcon,
-            //     title: 'Currrent Location'
-            // });
 
             // Loop through the places array and create a marker for each place
             for (var i = 0; i < places.length; i++) {
@@ -80,6 +70,14 @@
                     position: { lat: place.lat, lng: place.lng },
                     map: map,
                     title: place.name
+                });
+
+                var infowindow = new google.maps.InfoWindow({
+                            content: '<a href="https://google.com">' + place.name + '</a>'
+                        });
+
+                marker.addListener('click', function () {
+                    infowindow.open(map, marker);
                 });
             }
         }

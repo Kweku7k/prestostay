@@ -70,6 +70,7 @@ class Listing(db.Model):
     name = db.Column(db.String, nullable=False)
     email = db.Column(db.String)
     phone = db.Column(db.String)
+    logo = db.Column(db.String)
     description = db.Column(db.String)
     expectedRevenue = db.Column(db.Float)
     amountRecieved = db.Column(db.Float)
@@ -79,6 +80,8 @@ class Listing(db.Model):
     locationTag = db.Column(db.String)
     images = db.Column(db.String)
     slug = db.Column(db.String)
+    latitude = db.Column(db.String)
+    longitude = db.Column(db.String)
     suggestions = db.Column(db.String)
 
     def __repr__(self):
@@ -792,7 +795,6 @@ def onboard():
         print(form.data)
         # check email
         if User.query.filter_by(email = form.email.data).first() != None:
-            print()
             print("user")
             flash(f'There is already a user with this email address')
             return render_template('onboard.html', form=form, title="Onboard New User")
@@ -831,7 +833,11 @@ def onboard():
 
 @app.route('/maps', methods=['GET', 'POST'])
 def maps():
-    return render_template('maps.html')
+    maps = os.environ.get('GOOGLEMAPSAPIKEY')
+    print(maps)
+    return render_template('mapsandbox.html', mapsApiKey=maps)
+
+
 
 @app.route('/findme', methods=['GET', 'POST'])
 def findme():
