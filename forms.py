@@ -25,10 +25,11 @@ class PaymentForm(FlaskForm):
 class ListingForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     description = StringField('Description', validators=[DataRequired()])
-    location = StringField('Location', validators=[DataRequired()])
-    locationTag = StringField('LocationTag', validators=[DataRequired()])
+    # location = StringField('Location', validators=[DataRequired()])
+    location = SelectField('Region', choices=['Greater Accra','Greater Accra'])
+    locationTag = StringField('LocationTag')
     images = StringField('Images')
-    suggestions = StringField('Suggestions', validators=[DataRequired()])
+    suggestions = StringField('Suggestions')
     submit = SubmitField('Upload')
 
 class SubListingForm(FlaskForm):

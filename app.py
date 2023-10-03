@@ -2,7 +2,7 @@ import csv
 import datetime
 import json
 import os
-from flask import Flask, flash,redirect,url_for,render_template, request
+from flask import Flask, flash, jsonify,redirect,url_for,render_template, request
 from flask_login import current_user, login_user, logout_user
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -15,6 +15,8 @@ from forms import *
 import pprint
 import time
 import requests
+import geocoder
+
 
 app=Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -30,6 +32,8 @@ login_manager.login_view = "users.login"
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+mapsApiKey = os.environ.get('GOOGLEMAPSAPIKEY')
+
 
 prestoUrl = "https://prestoghana.com"
 baseUrl = "https://stay.prestoghana.com"
@@ -240,8 +244,8 @@ def createListing(body):
     new_listing = Listing(
         name=body.get("name"),
         description=body.get("description"),
-        location=body.get("location"),
-        locationTag=body.get("locationTag")
+        location=body.get("location", "Greater Accra"),
+        locationTag=body.get("locationTag", "Accra")
         )
 
     try:
@@ -251,6 +255,47 @@ def createListing(body):
         print(e)
         reportError(e)
     return body
+
+
+def fetch_cities_in_accra():
+    # Replace 'YOUR_API_KEY' with your actual Google Maps API key.
+    api_key = mapsApiKey
+    
+    # Define the base URL for the Places API text search.
+    base_url = 'https://maps.googleapis.com/maps/api/place/textsearch/json?'
+
+    # Specify the query to search for cities in the Accra region.
+    query = 'cities in Accra, Ghana'
+
+    # Construct the request URL.
+    request_url = f'{base_url}query={query}&key={api_key}'
+
+    try:
+        # Send the HTTP request to the API.
+        response = requests.get(request_url)
+
+        print(response)
+        
+        # Check if the request was successful (HTTP status code 200).
+        if response.status_code == 200:
+            data = response.json()
+            # print(data)
+            
+            # Extract the results containing city names.
+            results = data.get('results', [])
+            
+            if results:
+                city_names = [result['name'] for result in results]
+                pprint.pprint(city_names)
+                return city_names
+            else:
+                return []
+        else:
+            print(f'Error: {response.status_code} - {response.text}')
+            return []
+    except Exception as e:
+        print(f'An error occurred: {e}')
+        return []
 
 
 def createSubListing(body, listing):
@@ -713,13 +758,26 @@ def enquiry():
         return redirect(url_for('index'))
     return render_template('form.html', current_user=None, form=form, purchaseData=purchaseData)
 
+@app.route('/autocomplete', methods=['GET'])
+def autocomplete():
+    cities = fetch_cities_in_accra()
+    print(cities)
+    return jsonify(cities)
+
+
 @app.route('/newlisting', methods=['GET', 'POST'])
 def newlisting():
     form = ListingForm()
+
+
+    # form.location.choices = cities
+
     if form.validate_on_submit():
         newListing = createListing(form.data)
         pprint.pprint(newListing)
+        return redirect(url_for('maps'))
     else:
+        print("form.errors")
         print(form.errors)
     return render_template('newlisting.html', form=form, current_user=None)
 
@@ -833,10 +891,47 @@ def onboard():
 
 @app.route('/maps', methods=['GET', 'POST'])
 def maps():
-    maps = os.environ.get('GOOGLEMAPSAPIKEY')
-    print(maps)
-    return render_template('mapsandbox.html', mapsApiKey=maps)
 
+    ipData = get_user_location()
+    print(mapsApiKey)
+    print(ipData)
+
+    return render_template('mapsandbox.html', mapsApiKey=mapsApiKey, ipData=ipData)
+
+
+def get_user_location():
+    try:
+        # Get the user's public IP address using a service like ipinfo.io
+        ip_response = requests.get('https://ipinfo.io')
+        ip_data = ip_response.json()
+        user_ip = ip_data.get('ip')
+
+        # Use the user's IP address to fetch geolocation data
+        geo = geocoder.ip(user_ip)
+
+        print("geo")
+        print(geo)
+        print(type(geo))
+        
+
+        # Extract relevant location information
+        user_city = geo.city
+        # user_region = geo.region
+        user_country = geo.country
+        user_lat = geo.lat
+        user_lon = geo.lng
+
+        return {
+            'city': user_city,
+            'country': user_country,
+            'lat': user_lat,
+            'lng': user_lon
+        }
+    
+    except Exception as e:
+        # Handle any exceptions that may occur during the process
+        print(f"Error: {str(e)}")
+        return None
 
 
 @app.route('/findme', methods=['GET', 'POST'])

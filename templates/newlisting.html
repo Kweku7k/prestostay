@@ -48,7 +48,7 @@
                 
                 <div class="inputTextHolder">
                     <h6>{{form.locationTag.label}}</h6>
-                    {{form.locationTag (class="inputTextCard", placeholder="Please enter your locationTag number")}}
+                    {{form.locationTag (class="inputTextCard", id="city_query", placeholder="Please enter your locationTag number")}}
                     {% for error in form.locationTag.errors %}
                     <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                     {% endfor %}

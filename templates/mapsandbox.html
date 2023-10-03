@@ -10,7 +10,7 @@
     <style>
         #map {
             height: 100vh;
-            width: 100%;
+            width: 100vw;
         }
         body{
             margin: 0;
@@ -21,87 +21,16 @@
 <body style="font-family: 'Plus Jakarta Display', sans-serif;">
     <div id="map"></div>
 
-    <script>
-        let map;
-        let marker;
-        let geocoder;
-
-
-        var markerIcon = {
-                        url: "../static/img/user.png", // Replace with the URL of your custom image
-                        scaledSize: new google.maps.Size(60, 60), // Adjust the size as needed
-                    };
-
-        function initMap() {
-
-            if("geolocation" in navigator){
-                navigator.geolocation.getCurrentPosition(function (position) {
-
-                // Get the user's current latitude and longitude
-                var userLat = position.coords.latitude;
-                var userLng = position.coords.longitude;
-                const initialLocation = { lat: userLat, lng: userLng};
-
-
-                map = new google.maps.Map(document.getElementById('map'), {
-                center: initialLocation,
-                zoom: 18
-                });
-
-            marker = new google.maps.Marker({
-                position: initialLocation,
-                map: map,
-                draggable: true
-                });
-
-
-            geocoder = new google.maps.Geocoder();
-
-            // Add a listener to update the marker position when it is dragged
-            google.maps.event.addListener(marker, 'dragend', function() {
-                
-                const newPosition = marker.getPosition();
-                document.getElementById('latitude').textContent = newPosition.lat();
-                document.getElementById('longitude').textContent = newPosition.lng();
-                
-                // Perform reverse geocoding to get the place name
-                geocoder.geocode({ 'location': newPosition }, function(results, status) {
-                    if (status === 'OK') {
-                        if (results[0]) {
-                            document.getElementById('placename').textContent = results[0].formatted_address;
-                        } else {
-                            document.getElementById('placename').textContent = 'Place not found';
-                        }
-                    } else {
-                        document.getElementById('placename').textContent = 'Geocoding failed: ' + status;
-                    }
-                });
-            
-            });
-               
-            });
-
-            } else {
-                alert('Geolocation is not supported by your browser.');
-            }
-
-        }
-    </script>
+   
 
     <div style="display: flex; justify-content: space-between; align-items: center; position: fixed; bottom: 0; background-color: white; width: 100%; left: 50%; transform: translateX(-50%); ">
         <div style="padding: 30px; width: 100%;">
-            <!-- <h6>Choosing a place</h6>
-            <h1>Dawhenya</h1>
-            <h4>Choosing a place</h4> -->
-            <!-- <p>Latitude: <span id="latitude">0</span></p>
-            <p>Longitude: <span id="longitude">0</span></p> -->
-            <!-- <p>Place Name: </br> <b><span id="placename">Move The Cursor</span></b></p> -->
            
-            <p style="margin-bottom: 0;">Location Name:</p>
-            <h4 id="placename" style="margin-top: 0;" >Move The Cursor To Select A Place</h4>
+            <!-- <p style="margin-bottom: 0;">Location Name:</p> -->
+            <h4 id="placename" style="margin-top: 0;" >{{ipData.city}}</h4>
+            <p>Lng: <span id="longitude">{{ipData.lng}}</span> ||  Lat: <span id="latitude">{{ipData.lat}}</span></p> 
 
-
-                <button class="pill-button" style="width: 100%; font-family: 'Plus Jakarta Display', sans-serif;">This is me!</button>
+            <button class="pill-button" style="width: 100%; font-family: 'Plus Jakarta Display', sans-serif;">This is me!</button>
 
         </div>
         
@@ -111,10 +40,76 @@
 
     </div>
 
-    <p>Latitude: <span id="latitude">0</span></p>
+    <!-- <p>Latitude: <span id="latitude">0</span></p>
     <p>Longitude: <span id="longitude">0</span></p>
-    <p>Place Name: <span id="placename"></span></p>
+    <p>Place Name: <span id="placename">{{ipData.city}}</span></p>
+ -->
 
+ <script>
+    let map;
+    let marker;
+    let geocoder;
+
+    function initMap() {
+        console.log('flop')
+        if("geolocation" in navigator){
+            console.log('Map Initiated')
+            navigator.geolocation.getCurrentPosition(function (position) {
+
+            console.log('Inside getCurrentPosition function')
+            
+            // Get the user's current latitude and longitude
+            var userLat = position.coords.latitude;
+            var userLng = position.coords.longitude;
+
+            const initialLocation = { lat: userLat, lng: userLng};
+            console.log(initialLocation)
+
+            map = new google.maps.Map(document.getElementById('map'), {
+            center: initialLocation,
+            zoom: 18
+            });
+
+        marker = new google.maps.Marker({
+            position: initialLocation,
+            map: map,
+            draggable: true
+            });
+
+
+        geocoder = new google.maps.Geocoder();
+
+        // Add a listener to update the marker position when it is dragged
+        google.maps.event.addListener(marker, 'dragend', function() {
+            
+            const newPosition = marker.getPosition();
+            document.getElementById('latitude').textContent = newPosition.lat();
+            document.getElementById('longitude').textContent = newPosition.lng();
+            
+            // Perform reverse geocoding to get the place name
+            geocoder.geocode({ 'location': newPosition }, function(results, status) {
+                if (status === 'OK') {
+                    if (results[0]) {
+                        document.getElementById('placename').textContent = results[0].formatted_address;
+                    } else {
+                        document.getElementById('placename').textContent = 'Place not found';
+                    }
+                } else {
+                    document.getElementById('placename').textContent = 'Geocoding failed: ' + status;
+                }
+            });
+        
+        });
+           
+        });
+
+        } else {
+            console.log('Geolocation is not supported by your browser.')
+            alert('Geolocation is not supported by your browser.');
+        }
+
+    }
+</script>
 
     <script async defer src="https://maps.googleapis.com/maps/api/js?key={{mapsApiKey}}&callback=initMap"></script>
 </body>
