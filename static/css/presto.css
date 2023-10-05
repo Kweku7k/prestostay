@@ -62,6 +62,21 @@ a{
     transition: width 2s;
 }
 
+
+
+.pill-select-option-alternate{   
+    background-color: white;
+    color: #302cff;
+    border: none;
+    border-radius:10px ;
+    padding: 16px 22px;
+    box-shadow: 0 2px 8px 0 rgba(48, 44, 255, 0.1);
+    text-align: center;
+    font-weight: bold;
+    transition: width 2s;
+    margin-right: 3vw;
+}
+
 .pill-button-alternate{   
     background-color: white;
     color: #302cff;
@@ -371,9 +386,10 @@ margin-bottom: 3vh;
 .scrollmenu {
     overflow: auto;
     white-space: nowrap;
+    padding: 10px;
   }
   
-.scrollmenu a {
+.scrollmenu input {
     display: inline-block;
     color: white;
     text-align: center;

@@ -37,7 +37,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/Users/kweku/Documents/Presto/PrestoStay/env"
+VIRTUAL_ENV="/Users/nanakweku/Documents/Projects/Presto/PrestoStay/env"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
