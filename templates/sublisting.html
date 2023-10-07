@@ -13,7 +13,30 @@
             <h4>Hello, {{user.username}}</h4>
             <h6>Please select a sublisting.</h6>
             <h6 class="text-muted">{{listing.name}}</h6>
+        
+
+            <form action="" method="post">
+                    {{sublistingform.hidden_tag()}}
+ 
+                <!-- <div class="inputTextHolder"> -->
+            <div class="scrollmenu">
+                    {{sublistingform.block (class="pill-select-option-alternate", placeholder="Please enter your floor number")}}
+                    {{sublistingform.location (class="pill-select-option-alternate", placeholder="Please enter your floor number")}}
+                    {{sublistingform.bedsAvailable (class="pill-select-option-alternate", placeholder="Please enter your floor number")}}
+                    {{sublistingform.size (class="pill-select-option-alternate", placeholder="Please enter your floor number")}}
+                </div>
+                {{sublistingform.submit (class="pill-option", style="width:100%  ")}}
+            </form>
+
+            <!-- <div class="scrollmenu">
+                <a href="#"><button class="pill-option">Apartments</button></a>
+                <a href="#"><button class="pill-option-alternate">Male Only</button></a>
+                <a href="#"><button class="pill-option-alternate">Female Only</button></a>
+                <a href="#"><button class="pill-option-alternate">On Campus</button></a>
+            </div> -->
         </div>
+
+        
 
     </div>
 <br>
@@ -22,7 +45,7 @@
     {% for listing in sublistings %}
     
     <div class="col-md-3">
-        <a href="{{url_for('updateSubListing', subListingSlug=listing.slug , userId=user.id)}}" style="text-decoration: none; color: black;">
+        <a href="{{url_for('updateSubListing', userId=user.id, subListingSlug=listing.slug )}}" style="text-decoration: none; color: black;">
             <div data-aos="fade-up" class="card">
                 <h6>{{listing.name}}</h6>
                 <h2 style="font-weight: 700;">GHS {{listing.price}}</h2>
@@ -39,7 +62,43 @@
 </div>
 
 
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const floorFilter = document.getElementById("floor-filter");
+    const priceFilter = document.getElementById("price-filter");
+    const occupancyFilter = document.getElementById("occupancy-filter");
+
+    // Function to perform filtering
+    function filterContent() {
+        const floorValue = floorFilter.value.toLowerCase();
+        const priceValue = priceFilter.value.toLowerCase();
+        const occupancyValue = occupancyFilter.value.toLowerCase();
+
+        // Perform filtering of your content here
+        // Adapt this logic to your specific use case.
+
+        // Example:
+        // const itemsToFilter = document.querySelectorAll(".your-item-class");
+        // itemsToFilter.forEach(item => {
+        //     const itemFloor = item.dataset.floor.toLowerCase();
+        //     const itemPrice = item.dataset.price.toLowerCase();
+        //     const itemOccupancy = item.dataset.occupancy.toLowerCase();
+        // 
+        //     if (itemFloor.includes(floorValue) && itemPrice.includes(priceValue) && itemOccupancy.includes(occupancyValue)) {
+        //         item.style.display = "block";
+        //     } else {
+        //         item.style.display = "none";
+        //     }
+        // });
+    }
+
+    // Attach the filtering function to the input events of the filter fields
+    floorFilter.addEventListener("input", filterContent);
+    priceFilter.addEventListener("input", filterContent);
+    occupancyFilter.addEventListener("input", filterContent);
+});
 
 
+</script>
 
 {% endblock %}

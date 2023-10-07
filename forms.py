@@ -13,6 +13,17 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Submit')
 
+class SelectSubListingForm(FlaskForm):
+    name = StringField('Name')
+    location = SelectField('Location', choices=['All Floors'])
+    block = SelectField('Block', choices=['All Blocks'])
+    bedsAvailable = SelectField('Beds Available', choices=['All Beds'])
+    size = SelectField('Size', choices=['All Sizes'])
+    price = SelectField('Beds', choices=['All Room Types'])
+    occupancy = SelectField('Region', choices=['Greater Accra','Greater Accra'])
+
+    submit = SubmitField('Submit')
+
 
 class PaymentForm(FlaskForm):
     name = StringField('Name')

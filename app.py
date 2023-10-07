@@ -3,7 +3,7 @@ import datetime
 import json
 import os
 from flask import Flask, flash, jsonify,redirect,url_for,render_template, request
-from flask_login import current_user, login_user, logout_user
+from flask_login import login_user, logout_user, current_user
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Enum, func
@@ -16,13 +16,14 @@ import pprint
 import time
 import requests
 import geocoder
+from urllib.parse import quote as url_quote
+
 
 
 app=Flask(__name__)
 bcrypt = Bcrypt(app)
 sandboxDb = "postgresql://postgres:adumatta@database-1.crebgu8kjb7o.eu-north-1.rds.amazonaws.com:5432/stay"
 app.config['SECRET_KEY'] = 'c280ba2428b2157916b13s5e0c676dfde'
-# app.config['SQLALCHEMY_DATABASE_URI']= "sqlite:///test.db"
 app.config['SQLALCHEMY_DATABASE_URI']= sandboxDb
 
 
@@ -49,8 +50,7 @@ server = "SERVER"
 #  ----- LOGIN MANAGER
 @login_manager.user_loader
 def user_loader(user_id):
-    #TODO change here
-    return User.query.get(user_id)
+    return User.query.get_or_404(user_id)
 
 # ------ MODELS
 
@@ -97,11 +97,21 @@ class SubListing(db.Model):
     price = db.Column(db.Float)
     description = db.Column(db.String)
     listingId = db.Column(db.String)
-    occupants = db.Column(db.Integer)
+    occupants = db.Column(db.Integer) #bedsAvailable
     quantity = db.Column(db.Integer, default=0)
     divideCost = db.Column(db.Boolean, default=True)
     superListing = db.Column(db.String)
     listingSlug = db.Column(db.String)
+    # dismissable fields
+    block = db.Column(db.String)
+    roomId = db.Column(db.String)
+    bedsAvailable = db.Column(db.String)
+    bedsTaken = db.Column(db.String)
+    location = db.Column(db.String)
+    size = db.Column(db.String)
+    status = db.Column(db.String)
+    pricePerBed = db.Column(db.String)
+
     slug = db.Column(db.String)
     
     def __repr__(self):
@@ -164,7 +174,7 @@ class User(db.Model):
         return User.query.get(user_id)
 
     def __repr__(self):
-        return f"User ('{self.username}', ' - {self.sublisting}')"
+        return f"User ('{self.username}', ' - {self.sublisting}', 'Listing - {self.listing}')"
 
 
 class Transactions(db.Model):
@@ -644,6 +654,36 @@ def uploadData(filename):
             
     return message
 
+def uploadRoomData(filename, listing):
+    csv_file_path = filename  # Replace with the path to your CSV file
+    message = "New Rooms updated successfully!"
+
+    print("Attempting Create New Sublistings for " + listing.name)
+
+    # for u in SubListing.query.filter_by(listingS):
+    #     db.session.delete(u)
+
+    # create a new sublisting
+
+    with open(csv_file_path, 'r', newline='') as csvfile:
+        csv_reader = csv.DictReader(csvfile)
+        
+        for row in csv_reader:
+            print(row)
+
+            try:
+                # user = User(username = row["Name"], password = "0000",email = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+row["Number"]+"@prestoghana.com", phone = row["Number"], indexNumber=row["Index Number"], listing=row["Listing"], paid=row["Paid"], roomNumber=row["Room Number"], fullAmount=row["Full Amount"], balance=row["Balance"], listingSlug=row["listingSlug"] )
+                sublisting = SubListing(name = row["Name"], block=row["Block"], roomId=row["RoomId"], bedsAvailable=row["Beds Available"], bedsTaken = row["Beds Taken"], location = row["Location"], size=row["Size"], status = row["Vacancy Status"], pricePerBed=row["Price per bed"], price=row["Price"], listingId=row["Listing Id"], superListing=row["Super Lisiting"] )
+                db.session.add(sublisting)
+
+            except Exception as e:
+                message = "There seems to have been an issue with the upload"
+                print(e)
+
+            db.session.commit()
+            
+    return message
+
 
 
         
@@ -956,6 +996,35 @@ def findme():
         # return render_template('confirmUser.html', user=user, form=form)
     return render_template('pay.html', current_user=None, form=form)
 
+
+
+@app.route('/recpay', methods=['GET', 'POST'])
+def recpay():
+    form = FindUser()
+    print(form.data)
+
+    tempUserBody = {
+        "name":"A Church",
+        "logo":"https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.vecteezy.com%2Ffree-vector%2Fchurch-logo&psig=AOvVaw3QF9tq4rKcoxDOshWhwYzl&ust=1696564331488000&source=images&cd=vfe&ved=0CBEQjRxqFwoTCPix9eOA3oEDFQAAAAAdAAAAABAE"
+    }
+    if form.validate_on_submit():
+        phoneNumber = form.phone.data.replace(" ", "")[-9:] 
+
+        print("phoneNumber")
+        print(phoneNumber)
+
+        user = User.query.filter(User.phone.endswith(phoneNumber)).first()
+        listing = Listing.query.filter_by(slug="")
+        
+        print(user)
+        if user is None:
+            flash(f'We couldnt find anyone with this phone number.')
+            return redirect(url_for('findme'))
+        
+        return redirect(url_for('pay', userId=user.id))
+    return render_template('recpay.html', current_user=None, form=form, user=tempUserBody)
+
+
 @app.route('/pay/<int:userId>', methods=['GET','POST'])
 def pay(userId):
     user = User.query.get_or_404(userId)
@@ -998,9 +1067,20 @@ def pay(userId):
             flash(form.errors[0])
     return render_template('confirmUser.html', user=user, form=form)
 
+@app.route('/subSlugs/<string:listingSlug>', methods=['GET', 'POST'])
+def createSubListingSlugs(listingSlug):
+    sublisting = SubListing.query.filter_by(superListing=listingSlug).all()
+    for s in sublisting:
+        newslug = s.name.strip()+"-"+s.superListing+"-"+str(s.price)
+        newslug = newslug.strip()
+        print(newslug)
+        s.slug = newslug
+        db.session.commit()
+    return "Done."
 
 @app.route('/updateSubListing/<int:userId>/<string:subListingSlug>', methods=['GET', 'POST'])
 def updateSubListing(userId, subListingSlug):
+
     user = User.query.get_or_404(userId)
     sublisting = SubListing.query.filter_by(slug=subListingSlug).first()
     
@@ -1013,7 +1093,8 @@ def updateSubListing(userId, subListingSlug):
 
     try:
         user.sublistingSlug = subListingSlug
-        user.fullAmount += sublisting.price
+        user.fullAmount += sublisting.pricePerBed
+        user.roomNumber = sublisting.name
         db.session.commit()
     except Exception as e:
         print(e)
@@ -1023,17 +1104,40 @@ def updateSubListing(userId, subListingSlug):
 
     return redirect(url_for('pay',userId=user.id))
 
+def aggregateValues(value):
+    distinct_values = db.session.query(SubListing.value).distinct().all()
+    distinct_values = [value[0] for value in distinct_values] 
+    return distinct_values
+
 @app.route('/listing/<int:userId>', methods=['GET','POST'])
 def sublisting(userId):
+    sublistingform = SelectSubListingForm()
     user = User.query.get_or_404(userId)
-    listing = Listing.query.filter_by(slug=user.listingSlug).first()
+    listing = Listing.query.filter_by(slug=user.listing).first()
     print(user)
+    print("listing", listing)
     form = ListingForm()
-    sublistings = SubListing.query.filter_by(listingSlug=user.listing).all()
-    print(sublisting)
+    sublistings = SubListing.query.filter_by(superListing=user.listing).all()
+    # print(sublistings)
     print(user.sublisting)
+
+    sublistingform.location.choices = [value[0] for value in db.session.query(SubListing.location).distinct().all()] 
+    sublistingform.bedsAvailable.choices = [value[0] + " in a room" for value in db.session.query(SubListing.bedsAvailable).distinct().all()] 
+    sublistingform.size.choices = [value[0] for value in db.session.query(SubListing.size).distinct().all()] 
+    sublistingform.block.choices = ["Block " + value[0] for value in db.session.query(SubListing.block).distinct().all()] 
+    # sublistingform.size.choices = [value[0] for value in db.session.query(SubListing.size).distinct().all()] 
+
+    # append "--" at the starting of the drop down
     if user.sublisting != None:
         if request.method == 'POST':
+            if sublistingform.validate_on_submit():
+                try:
+                    print("form.location.data")
+                    print(form.location.data)
+                    sublistings = SubListing.query.filter_by(location=form.location.data).all()
+                except Exception as e:
+                    print(e)
+
             if form.validate_on_submit():
                 try:   
                     user.sublisting = form.sublisting.data
@@ -1047,9 +1151,9 @@ def sublisting(userId):
 
                 return redirect(url_for('transaction', transactionId=transaction.id))
             else:
-                print(form.errors)
-                flash(form.errors[0])
-    return render_template('sublisting.html', user=user, listing=listing, sublistings=sublistings, form=form)
+                print("Errors:",form.errors)
+                # flash(form.errors[0])
+    return render_template('sublisting.html', user=user, sublistingform=sublistingform,listing=listing, sublistings=sublistings, form=form)
 
 @app.route('/mysublistings', methods=['GET', 'POST'])
 def mysublistings():
@@ -1193,8 +1297,9 @@ def dashboard():
 
 
 @app.route('/upload/<string:dataType>', methods=['GET', 'POST'])
-def upload(listing="Pronto Hostel", dataType = None):
-    listing = Listing.query.get_or_404(1)
+@app.route('/upload/<string:listingSlug>/<string:dataType>', methods=['GET', 'POST'])
+def upload(listingSlug, dataType = None):
+    listing = Listing.query.filter_by(slug=listingSlug).first()
     users = User.query.filter_by(listingSlug=listing.slug).all()
     if request.method == 'POST':
 
@@ -1226,6 +1331,8 @@ def upload(listing="Pronto Hostel", dataType = None):
             message = uploadTransactions(save_path)
         elif dataType == "users":
             message = uploadData(save_path)
+        elif dataType == "rooms":
+            message = uploadRoomData(save_path, listing)
 
         print(message)
 
