@@ -389,7 +389,16 @@ margin-bottom: 3vh;
     padding: 10px;
   }
   
-.scrollmenu input {
+.scrollmenu a {
+    display: inline-block;
+    color: white;
+    text-align: center;
+    padding: 14px;
+    text-decoration: none;
+  }
+
+    
+.scrollmenu scroll-item {
     display: inline-block;
     color: white;
     text-align: center;

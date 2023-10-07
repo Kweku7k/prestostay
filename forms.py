@@ -19,8 +19,8 @@ class SelectSubListingForm(FlaskForm):
     block = SelectField('Block', choices=['All Blocks'])
     bedsAvailable = SelectField('Beds Available', choices=['All Beds'])
     size = SelectField('Size', choices=['All Sizes'])
-    price = SelectField('Beds', choices=['All Room Types'])
-    occupancy = SelectField('Region', choices=['Greater Accra','Greater Accra'])
+    # price = SelectField('Beds', choices=['All Room Types'])
+    # occupancy = SelectField('Region', choices=['Greater Accra','Greater Accra'])
 
     submit = SubmitField('Submit')
 

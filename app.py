@@ -3,14 +3,13 @@ import datetime
 import json
 import os
 from flask import Flask, flash, jsonify,redirect,url_for,render_template, request
-from flask_login import login_user, logout_user, current_user
+from flask_login import login_user, logout_user, current_user, LoginManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Enum, func
 from itsdangerous import Serializer
 from flask_bcrypt import Bcrypt
-from utils import apiResponse, send_sms, sendTelegram
-from flask_login import  LoginManager
+from utils import apiResponse, send_sms, sendTelegram  
 from forms import *
 import pprint
 import time
@@ -1093,7 +1092,7 @@ def updateSubListing(userId, subListingSlug):
 
     try:
         user.sublistingSlug = subListingSlug
-        user.fullAmount += sublisting.pricePerBed
+        user.fullAmount += float(sublisting.pricePerBed)
         user.roomNumber = sublisting.name
         db.session.commit()
     except Exception as e:
@@ -1119,40 +1118,52 @@ def sublisting(userId):
     form = ListingForm()
     sublistings = SubListing.query.filter_by(superListing=user.listing).all()
     # print(sublistings)
-    print(user.sublisting)
+    print(user.sublisting)    
+    
+    pprint.pprint(sublistingform.data)
+
 
     sublistingform.location.choices = [value[0] for value in db.session.query(SubListing.location).distinct().all()] 
+    sublistingform.location.choices.insert(0,'All Floors')
+
     sublistingform.bedsAvailable.choices = [value[0] + " in a room" for value in db.session.query(SubListing.bedsAvailable).distinct().all()] 
+    sublistingform.bedsAvailable.choices.insert(0,'All Beds')
+    
     sublistingform.size.choices = [value[0] for value in db.session.query(SubListing.size).distinct().all()] 
+    sublistingform.size.choices.insert(0,'All Sizes')
+
     sublistingform.block.choices = ["Block " + value[0] for value in db.session.query(SubListing.block).distinct().all()] 
-    # sublistingform.size.choices = [value[0] for value in db.session.query(SubListing.size).distinct().all()] 
+    sublistingform.block.choices.insert(0,'All Blocks')
 
-    # append "--" at the starting of the drop down
-    if user.sublisting != None:
-        if request.method == 'POST':
-            if sublistingform.validate_on_submit():
-                try:
-                    print("form.location.data")
-                    print(form.location.data)
-                    sublistings = SubListing.query.filter_by(location=form.location.data).all()
-                except Exception as e:
-                    print(e)
+    if request.method == 'POST':
+        if sublistingform.validate_on_submit():
+            try:
+                print("sublistingform.location.data")
+                print(sublistingform.location.data)
+                sublistings = SubListing.query.filter_by(location=sublistingform.location.data, block=sublistingform.block.data[-1], bedsAvailable=sublistingform.bedsAvailable.data[0], size=sublistingform.size.data).all()
+            except Exception as e:
+                print(e)
+        else:
+            print("Errors:",sublistingform.errors)
 
-            if form.validate_on_submit():
-                try:   
-                    user.sublisting = form.sublisting.data
-                    user.roomId = form.roomId.data
-                    user.fullAmount = user.fullAmount + sublisting.price
-                    db.session.commit()
+        if form.validate_on_submit():
+            try:   
+                user.sublisting = form.sublisting.data
+                user.roomId = form.roomId.data
+                user.fullAmount = user.fullAmount + sublisting.price
+                user.roomNumber = sublisting.name
+                db.session.commit()
 
-                except Exception as e:
-                    reportError(e)
-                    flash(f'We couldnt update your listing, please try again later.')
+            except Exception as e:
+                reportError(e)
+                flash(f'We couldnt update your listing, please try again later.')
 
-                return redirect(url_for('transaction', transactionId=transaction.id))
-            else:
-                print("Errors:",form.errors)
-                # flash(form.errors[0])
+            return redirect(url_for('transaction', transactionId=transaction.id))
+        else:
+            print("Errors:",form.errors)
+
+        # updateSubListing(user.id)
+            # flash(form.errors[0])
     return render_template('sublisting.html', user=user, sublistingform=sublistingform,listing=listing, sublistings=sublistings, form=form)
 
 @app.route('/mysublistings', methods=['GET', 'POST'])
