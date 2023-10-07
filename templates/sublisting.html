@@ -6,33 +6,101 @@
 
 {% block body %}
 <div class="container">
+
+    <!-- Button trigger modal -->
+<!-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+    Launch demo modal
+  </button> -->
+
+  <div class="flexBar" style="align-items: center; margin: 10px auto;">
+    <div>
+        <h1>Hello, {{user.username}}</h1>
+        <h4>Please select a sublisting.</h4>
+
+        <h6 style="color: rgb(46, 46, 200);"> 📍{{listing.name}}</h6>
+    </div>
+    
+    <button class="pill-button" data-bs-toggle="modal" data-bs-target="#exampleModal">🔍</button>
+</div>
+  
+  <!-- Modal -->
+  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Room Picker</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <form action="" method="post">
+                {{sublistingform.hidden_tag()}}
+
+                <div class="inputTextHolder">
+                    <h6>{{sublistingform.block.label}}</h6>
+
+                    {{sublistingform.block (class="inputTextCard", placeholder="Please enter your block number")}}
+                    
+                    {% for error in sublistingform.block.errors %}
+                        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                    {% endfor %}
+                </div>
+
+                <div class="inputTextHolder">
+                    <h6>{{sublistingform.location.label}}</h6>
+                    
+                    {{sublistingform.location (class="inputTextCard", placeholder="Please enter your location number")}}
+                    
+                    {% for error in sublistingform.location.errors %}
+                        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                    {% endfor %}
+                </div>
+
+
+                <div class="inputTextHolder">
+                    <h6>{{sublistingform.bedsAvailable.label}}</h6>
+                    
+                    {{sublistingform.bedsAvailable (class="inputTextCard", placeholder="Please enter your bedsAvailable number")}}
+                    
+                    {% for error in sublistingform.bedsAvailable.errors %}
+                        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                    {% endfor %}
+                </div>
+
+                <div class="inputTextHolder">
+                    <h6>{{sublistingform.size.label}}</h6>
+                    
+                    {{sublistingform.size (class="inputTextCard", placeholder="Please enter your size number")}}
+                    
+                    {% for error in sublistingform.size.errors %}
+                        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                    {% endfor %}
+                </div>
+         
+                <br/>
+            {{sublistingform.submit (class="pill-option", style="width:100%  ")}}
+        </form>
+        </div>
+       
+        </div>
+      </div>
+    </div>
+  <!-- </div> -->
 <div class="info-block" style="margin-top: 5vh;">
 
-    <div class="flexBar">
+    <!-- <div class="flexBar">
         <div>
             <h4>Hello, {{user.username}}</h4>
             <h6>Please select a sublisting.</h6>
             <h6 class="text-muted">{{listing.name}}</h6>
         
 
-            <form action="" method="post">
-                    {{sublistingform.hidden_tag()}}
- 
-                <!-- <div class="inputTextHolder"> -->
-            <div class="scrollmenu">
-                {{sublistingform.block (class="pill-select-option-alternate", placeholder="Please enter your floor number")}}
-                {{sublistingform.location (class="pill-select-option-alternate", placeholder="Please enter your floor number")}}
-                {{sublistingform.bedsAvailable (class="pill-select-option-alternate", placeholder="Please enter your floor number")}}
-                {{sublistingform.size (class="pill-select-option-alternate", placeholder="Please enter your floor number")}}
-            </div>
-                {{sublistingform.submit (class="pill-option", style="width:100%  ")}}
-            </form>
+            
 
         </div>
 
         
 
-    </div>
+    </div> -->
 <br>
 <div class="row">
 
@@ -51,49 +119,19 @@
 
     {% endfor %}
 
+    <div style="margin: auto; display: flex; justify-content: space-around; align-items: center;">
+        <div>
+            <button class="pill-button" data-bs-toggle="modal" data-bs-target="#exampleModal" >🔍 Search for sublisting</button>
+            <h6 class="text-muted" style="text-align: center;">{{message}}</h6>
+        </div>
+
+    </div>
+
+
     
 </div>
 
 </div>
 
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const floorFilter = document.getElementById("floor-filter");
-    const priceFilter = document.getElementById("price-filter");
-    const occupancyFilter = document.getElementById("occupancy-filter");
-
-    // Function to perform filtering
-    function filterContent() {
-        const floorValue = floorFilter.value.toLowerCase();
-        const priceValue = priceFilter.value.toLowerCase();
-        const occupancyValue = occupancyFilter.value.toLowerCase();
-
-        // Perform filtering of your content here
-        // Adapt this logic to your specific use case.
-
-        // Example:
-        // const itemsToFilter = document.querySelectorAll(".your-item-class");
-        // itemsToFilter.forEach(item => {
-        //     const itemFloor = item.dataset.floor.toLowerCase();
-        //     const itemPrice = item.dataset.price.toLowerCase();
-        //     const itemOccupancy = item.dataset.occupancy.toLowerCase();
-        // 
-        //     if (itemFloor.includes(floorValue) && itemPrice.includes(priceValue) && itemOccupancy.includes(occupancyValue)) {
-        //         item.style.display = "block";
-        //     } else {
-        //         item.style.display = "none";
-        //     }
-        // });
-    }
-
-    // Attach the filtering function to the input events of the filter fields
-    floorFilter.addEventListener("input", filterContent);
-    priceFilter.addEventListener("input", filterContent);
-    occupancyFilter.addEventListener("input", filterContent);
-});
-
-
-</script>
 
 {% endblock %}

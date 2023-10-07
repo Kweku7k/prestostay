@@ -22,7 +22,7 @@ class SelectSubListingForm(FlaskForm):
     # price = SelectField('Beds', choices=['All Room Types'])
     # occupancy = SelectField('Region', choices=['Greater Accra','Greater Accra'])
 
-    submit = SubmitField('Submit')
+    submit = SubmitField('Search')
 
 
 class PaymentForm(FlaskForm):

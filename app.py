@@ -1111,6 +1111,8 @@ def aggregateValues(value):
 @app.route('/listing/<int:userId>', methods=['GET','POST'])
 def sublisting(userId):
     sublistingform = SelectSubListingForm()
+    message = 'You have reached the end of this list.'
+
     user = User.query.get_or_404(userId)
     listing = Listing.query.filter_by(slug=user.listing).first()
     print(user)
@@ -1140,7 +1142,10 @@ def sublisting(userId):
             try:
                 print("sublistingform.location.data")
                 print(sublistingform.location.data)
-                sublistings = SubListing.query.filter_by(location=sublistingform.location.data, block=sublistingform.block.data[-1], bedsAvailable=sublistingform.bedsAvailable.data[0], size=sublistingform.size.data).all()
+                sublistingsData = SubListing.query.filter_by(location=sublistingform.location.data, block=sublistingform.block.data[-1], bedsAvailable=sublistingform.bedsAvailable.data[0], size=sublistingform.size.data)
+                sublistings = sublistingsData.all()
+                if sublistingsData.count() == 0:
+                    message = 'Unfortunately, there were no listings found. Please try to search again.'
             except Exception as e:
                 print(e)
         else:
@@ -1164,7 +1169,7 @@ def sublisting(userId):
 
         # updateSubListing(user.id)
             # flash(form.errors[0])
-    return render_template('sublisting.html', user=user, sublistingform=sublistingform,listing=listing, sublistings=sublistings, form=form)
+    return render_template('sublisting.html', user=user, message=message,sublistingform=sublistingform,listing=listing, sublistings=sublistings, form=form)
 
 @app.route('/mysublistings', methods=['GET', 'POST'])
 def mysublistings():
