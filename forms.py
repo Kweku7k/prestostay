@@ -16,7 +16,6 @@ class LoginForm(FlaskForm):
 class SelectSubListingForm(FlaskForm):
     name = StringField('Name')
     location = SelectField('Location', choices=['All Floors'])
-    block = SelectField('Block', choices=['All Blocks'])
     bedsAvailable = SelectField('Beds Available', choices=['All Beds'])
     size = SelectField('Size', choices=['All Sizes'])
     # price = SelectField('Beds', choices=['All Room Types'])

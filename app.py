@@ -110,6 +110,7 @@ class SubListing(db.Model):
     size = db.Column(db.String)
     status = db.Column(db.String)
     pricePerBed = db.Column(db.String)
+    vacant = db.Column(db.Boolean, default=True)
 
     slug = db.Column(db.String)
     
@@ -1108,6 +1109,21 @@ def aggregateValues(value):
     distinct_values = [value[0] for value in distinct_values] 
     return distinct_values
 
+
+@app.route('/updateRoomCount/<string:superListing>')
+def updateRoomCount(superListing):
+    sublistings = SubListing.query.filter_by(superListing=superListing).all()
+    for i in sublistings:
+        print(i.bedsAvailable, i.bedsTaken, i.status)
+        if i.bedsAvailable != i.bedsTaken:
+            i.vacant = True
+        else:
+            i.vacant = False
+        print(i.vacant)
+    db.session.commit()
+    return 'Done'
+
+
 @app.route('/listing/<int:userId>', methods=['GET','POST'])
 def sublisting(userId):
     sublistingform = SelectSubListingForm()
@@ -1134,15 +1150,12 @@ def sublisting(userId):
     sublistingform.size.choices = [value[0] for value in db.session.query(SubListing.size).distinct().all()] 
     sublistingform.size.choices.insert(0,'All Sizes')
 
-    sublistingform.block.choices = ["Block " + value[0] for value in db.session.query(SubListing.block).distinct().all()] 
-    sublistingform.block.choices.insert(0,'All Blocks')
-
     if request.method == 'POST':
         if sublistingform.validate_on_submit():
             try:
                 print("sublistingform.location.data")
                 print(sublistingform.location.data)
-                sublistingsData = SubListing.query.filter_by(location=sublistingform.location.data, block=sublistingform.block.data[-1], bedsAvailable=sublistingform.bedsAvailable.data[0], size=sublistingform.size.data)
+                sublistingsData = SubListing.query.filter_by(location=sublistingform.location.data, bedsAvailable=sublistingform.bedsAvailable.data[0])
                 sublistings = sublistingsData.all()
                 if sublistingsData.count() == 0:
                     message = 'Unfortunately, there were no listings found. Please try to search again.'
@@ -1151,21 +1164,21 @@ def sublisting(userId):
         else:
             print("Errors:",sublistingform.errors)
 
-        if form.validate_on_submit():
-            try:   
-                user.sublisting = form.sublisting.data
-                user.roomId = form.roomId.data
-                user.fullAmount = user.fullAmount + sublisting.price
-                user.roomNumber = sublisting.name
-                db.session.commit()
+        # if form.validate_on_submit():
+        #     try:   
+        #         user.sublisting = form.sublisting.data
+        #         user.roomId = form.roomId.data
+        #         user.fullAmount = user.fullAmount + sublisting.price
+        #         user.roomNumber = sublisting.name
+        #         db.session.commit()
 
-            except Exception as e:
-                reportError(e)
-                flash(f'We couldnt update your listing, please try again later.')
+        #     except Exception as e:
+        #         reportError(e)
+        #         flash(f'We couldnt update your listing, please try again later.')
 
-            return redirect(url_for('transaction', transactionId=transaction.id))
-        else:
-            print("Errors:",form.errors)
+        #     return redirect(url_for('transaction', transactionId=transaction.id))
+        # else:
+        #     print("Errors:",form.errors)
 
         # updateSubListing(user.id)
             # flash(form.errors[0])

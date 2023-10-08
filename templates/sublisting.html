@@ -35,15 +35,7 @@
             <form action="" method="post">
                 {{sublistingform.hidden_tag()}}
 
-                <div class="inputTextHolder">
-                    <h6>{{sublistingform.block.label}}</h6>
-
-                    {{sublistingform.block (class="inputTextCard", placeholder="Please enter your block number")}}
-                    
-                    {% for error in sublistingform.block.errors %}
-                        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
-                    {% endfor %}
-                </div>
+               
 
                 <div class="inputTextHolder">
                     <h6>{{sublistingform.location.label}}</h6>
@@ -87,20 +79,6 @@
   <!-- </div> -->
 <div class="info-block" style="margin-top: 5vh;">
 
-    <!-- <div class="flexBar">
-        <div>
-            <h4>Hello, {{user.username}}</h4>
-            <h6>Please select a sublisting.</h6>
-            <h6 class="text-muted">{{listing.name}}</h6>
-        
-
-            
-
-        </div>
-
-        
-
-    </div> -->
 <br>
 <div class="row">
 
@@ -109,10 +87,18 @@
     <div class="col-md-3">
         <a href="{{url_for('updateSubListing', userId=user.id, subListingSlug=listing.slug )}}" style="text-decoration: none; color: black;">
             <div data-aos="fade-up" class="card">
-                <h6>{{listing.name}} - {{listing.size}}</h6>
-                <h2 style="font-weight: 700;">GHS {{listing.price}}</h2>
+                <div style="display: flex; justify-content: space-between;">
+                    <h6>{{listing.name}}</h6>
+                    <h6 class="text-muted">{{listing.size}}</h6>
+
+                </div>
+                <h2 style="font-weight: 700;">GHS {{listing.pricePerBed}}</h2>
                 <h6 class="text-muted">{{listing.bedsAvailable}} in a room - {{listing.location}}</h6>
-                <h6 class="text-muted"></h6>
+                <div style="display: flex; align-items: center; ">
+                    <div style="width: 10px; height: 10px; background-color: green; border-radius: 50%; margin-right: 10px;"></div>
+                    <h6 class="text-muted" style="margin: 0;"> {{listing.bedsAvailable}} beds available</h6>
+                </div>
+
             </div>
         </a>
     </div> 
