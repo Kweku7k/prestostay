@@ -8,6 +8,12 @@ class FindUser(FlaskForm):
     phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
     submit = SubmitField('Proceed')
 
+
+class FindRecUser(FlaskForm):
+    organisation = SelectField('Organisation', choices=[('CU Female Annex', 'CU Female Annex')]) #Api call for all rooms
+    phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
+    submit = SubmitField('Proceed')
+
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
@@ -74,6 +80,16 @@ class OnboardForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password', message='Your passwords dont match, please try again')])
     submit = SubmitField('Update')
+
+class RegisterForm(FlaskForm):
+    username = StringField('Name', validators=[DataRequired()])
+    phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
+    email = StringField('Email', validators=[DataRequired()])
+    organisation = SelectField('Listing', choices=[]) #Api call for all rooms
+    password = PasswordField('Password', validators=[Length(min=6)])
+    confirm_password = PasswordField('Confirm Password', validators=[EqualTo('password', message='Your passwords dont match, please try again')])
+    submit = SubmitField('Update')
+
 
 class Enquiry(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])

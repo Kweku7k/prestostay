@@ -753,6 +753,11 @@ def index():
 def landingPage():
     return render_template('landingpage.html', loadingMessage = "Loading!")
 
+@app.route('/recpayment')
+def recpayment():
+    return render_template('paylandingpage.html', loadingMessage = "Loading!")
+
+
 @app.route('/preview', methods=['GET', 'POST'])
 def preview():
     listing = {
@@ -929,6 +934,65 @@ def onboard():
         print(form.errors)
     return render_template('onboard.html', form=form, title="Onboard New User")
 
+
+@app.route('/register/<string:organisationslug>', methods=(['POST','GET']))
+def register(organisationslug):
+    form = RegisterForm()
+
+    title = organisationslug
+    organisation = Listing.query.filter_by(slug=organisationslug).first()
+    form.organisation.choices = [organisationslug]
+    form.organisation.data = organisationslug
+    if organisation == None:
+        flash(f'There was no organisation with this slug, please check and try again.')
+        return redirect(url_for('index'))
+
+    welcomeMessage = organisation.name
+    welcomeDescription ="Welcome to "+organisation.name+" onboarding portal. Please enter your details to create your account and get started."
+
+    if current_user:
+        logout_user()
+        print ("You have been logged out")
+    if form.validate_on_submit():
+        print(form.data)
+        # check email
+        if User.query.filter_by(email = form.email.data).first() != None:
+            print("user")
+            flash(f'There is already a user with this email address')
+            return render_template('register.html', form=form, title="Onboard New User")
+            
+        elif User.query.filter_by(phone = form.phone.data).first() != None:
+            flash(f'There is already a user with this phone number')
+            return render_template('register.html', form=form, title="Onboard New User")
+        
+        else:
+            listing = organisation
+
+            hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+            newuser = User(username=form.username.data, email=form.email.data, phone=form.phone.data, listing=organisation.slug, listingSlug=organisation.slug, password=hashed_password)
+            print(newuser)
+            try:
+                db.session.add(newuser)
+                db.session.commit()
+                send_sms(newuser.phone, "You have been successfully onboarded to "+organisation.name+". \nhttps://stay.prestoghana.com/recpay" + str(newuser.id) +  " \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
+                sendTelegram(newuser.phone, newuser.username +" : " + newuser.phone + "has onboarded to PrestoPay. \nhttps://stay.prestoghana.com/profile/ \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
+                return redirect(url_for('sublisting', userId=newuser.id))
+            except Exception as e:
+                print(e)
+                print("User was not able to be created")
+            print("Registered new user: " + newuser.username + " " + newuser.email)
+            
+            print(form.password.data)
+            print(form.confirm_password.data)
+
+            user = User.query.filter_by(email=form.email.data).first()
+
+            return redirect(url_for('recpay', userId=user.id))
+    else:
+        print(form.errors)
+    return render_template('register.html', welcomeDescription=welcomeDescription, form=form, title=title, welcomeMessage=welcomeMessage)
+
+
 @app.route('/maps', methods=['GET', 'POST'])
 def maps():
 
@@ -985,7 +1049,7 @@ def findme():
         print(phoneNumber)
 
         user = User.query.filter(User.phone.endswith(phoneNumber)).first()
-        listing = Listing.query.filter_by(slug="")
+        
         
         print(user)
         if user is None:
@@ -999,12 +1063,20 @@ def findme():
 
 
 @app.route('/recpay', methods=['GET', 'POST'])
-def recpay():
-    form = FindUser()
+@app.route('/recpay/<string:organisationSlug>', methods=['GET', 'POST'])
+
+def recpay(organisationSlug = None):
+    form = FindRecUser()
     print(form.data)
 
+    form.organisation.choices = [value.name for value in Listing.query.all()]
+
+    if organisationSlug != None:
+        organisation = Listing.query.filter_by(slug=organisationSlug).first()
+        form.organisation.data = organisation.name
+
     tempUserBody = {
-        "name":"A Church",
+        "name":"Make A Recurring Payment",
         "logo":"https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.vecteezy.com%2Ffree-vector%2Fchurch-logo&psig=AOvVaw3QF9tq4rKcoxDOshWhwYzl&ust=1696564331488000&source=images&cd=vfe&ved=0CBEQjRxqFwoTCPix9eOA3oEDFQAAAAAdAAAAABAE"
     }
     if form.validate_on_submit():
@@ -1024,6 +1096,39 @@ def recpay():
         return redirect(url_for('pay', userId=user.id))
     return render_template('recpay.html', current_user=None, form=form, user=tempUserBody)
 
+
+
+@app.route('/recpay/<int:userId>', methods=['GET','POST'])
+def recpayId(userId):
+    user = User.query.get_or_404(userId)
+    form = PaymentForm()
+    listing = Listing.query.filter_by(slug=user.listingSlug).first()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+
+            body={
+                "userId":user.id,
+                "appId":listing.slug,
+                "username":user.username,
+                "roomID":user.roomNumber,
+                "listing":user.listing,
+                "amount":form.amount.data,
+                "balanceBefore":user.balance,
+                # "account":form.account.data, 
+                # "network":form.network.data,
+                "channel":"WEB"
+            }
+
+            transaction = createTransaction(body)
+
+            response = externalPay(transaction)
+
+            return redirect(response["url"])
+
+        else:
+            print(form.errors)
+            flash(form.errors[0])
+    return render_template('confirmUser.html', user=user, form=form)
 
 @app.route('/pay/<int:userId>', methods=['GET','POST'])
 def pay(userId):

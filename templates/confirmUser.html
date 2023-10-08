@@ -33,7 +33,7 @@
                     <hr>
                 
 
-                    {% if user.balance != 0 %}
+                    
                         <form action="" method="post">
                             {{form.hidden_tag()}}
                             <div class="inputTextHolder">
@@ -47,11 +47,12 @@
 
                             {{form.submit(class="pill-button", style="width: 100%; margin-top:5vh;")}}
                         </form>
-                    {% endif %}
+                   
 
-                    <!-- <a href="{{url_for('usertransactions', userId=user.id)}}">
+                        
+                    <a href="{{url_for('usertransactions', userId=user.id)}}">
                         <button style="width: 100%; margin-top:5vh;" class="pill-button-alternate">Transaction History</button>
-                    </a> -->
+                    </a>
                 </div>
 
             </div>

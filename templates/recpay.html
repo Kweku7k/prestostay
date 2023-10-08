@@ -22,9 +22,9 @@
                 </h6>   
 
                 <div class="inputTextHolder">
-                    <h6>{{form.hostel.label}}</h6>
-                    {{form.hostel (class="inputTextCard", placeholder="Please enter your hostel number")}}
-                    {% for error in form.hostel.errors %}
+                    <h6>{{form.organisation.label}}</h6>
+                    {{form.organisation (class="inputTextCard", placeholder="Please enter your organisation number")}}
+                    {% for error in form.organisation.errors %}
                     <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                     {% endfor %}
                 </div>
