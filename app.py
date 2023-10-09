@@ -1303,14 +1303,6 @@ def sublisting(userId):
                 print("sublistingform.location.data")
                 print(sublistingform.location.data)
                 # sublistingsData = SubListing.query.filter_by(location=sublistingform.location.data, bedsAvailable=sublistingform.bedsAvailable.data[0])
-                # sublistingsData =  db.query.filter(or_(Sublisting.location != 'All Floors')).all()
-                # sublistingsData = SubListing.query.filter(SubListing.vacant == True).all()
-
-                # queryList = [sublistingform.location.data, sublistingform.bedsAvailable.data, sublistingform.size.data]
-
-                # THIS COULD WORK
-                # Now, you can query vacant from the results of the first query
-
 
                 if sublistingform.location.data != 'All Floors':
                     sublistings = [listing for listing in sublistings if listing.location == sublistingform.location.data]
@@ -1332,8 +1324,8 @@ def sublisting(userId):
                 # print(sublistingsData)
 
                 # sublistings = sublistingsData.all()
-                # if sublistingsData.count() == 0:
-                #     message = 'Unfortunately, there were no listings found. Please try to search again.'
+                if len(sublistings) == 0:
+                    message = 'Unfortunately, there were no listings found. Please try to search again.'
             except Exception as e:
                 print(e)
         else:

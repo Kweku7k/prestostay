@@ -3,7 +3,7 @@ import urllib
 import time
 
 prestoBot = "5876869228:AAFk644pEKRBnEhZ6jbG2nXRlj4fsyZEYgg"
-prestoStayGroup = "993698249"
+prestoStayGroup = "4050514650"
 
 def sendTelegram(params):
     try:
