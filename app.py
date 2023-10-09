@@ -65,7 +65,21 @@ class Suggestions(db.Model):
 
     def __repr__(self):
         return f"Suggestion('id: {self.id}', 'suggestion:{self.suggestion}', 'slug:{self.slug}')"
+  
     
+class TransactionType(db.Model):
+    tablename=['TransactionType']
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    superListing = db.Column(db.String)
+    maxAmount = db.Column(db.Float)
+    minAmount = db.Column(db.Float)
+
+    def __repr__(self):
+        return f"TransactionType('id: {self.id}', 'name:{self.name}', 'superListing:{self.superListing}')"
+    
+
 class Listing(db.Model):
     tablename = ['Listing']
 
@@ -196,7 +210,8 @@ class Transactions(db.Model):
     requested = db.Column(db.Boolean, default=False)
     paid = db.Column(db.Boolean, default=False)
     account = db.Column(db.String)
-    network = db.Column(db.String)
+    network = db.Column(db.String)    
+    transactionType = db.Column(db.String)
     ledgerEntryId = db.Column(db.Integer)
     ref = db.Column(db.String) #notsupersure?
     prestoTransactionId = db.Column(db.Integer)
@@ -399,6 +414,7 @@ def createTransaction(body):
         account = body.get("account"),
         network = body.get("network"),
         channel = body.get("channel"),
+        transactionType = body.get('transactionType'),
         total=body.get('total')
     )
 
@@ -936,61 +952,73 @@ def onboard():
 
 
 @app.route('/register/<string:organisationslug>', methods=(['POST','GET']))
-def register(organisationslug):
+@app.route('/register', methods=(['POST','GET']))
+def register(organisationslug = None):
     form = RegisterForm()
-
+    organisation = None
+    welcomeMessage = "Welcome To PrestoPay"
+    welcomeDescription = "Please fill in the form to create a new account."
     title = organisationslug
-    organisation = Listing.query.filter_by(slug=organisationslug).first()
-    form.organisation.choices = [organisationslug]
-    form.organisation.data = organisationslug
-    if organisation == None:
-        flash(f'There was no organisation with this slug, please check and try again.')
-        return redirect(url_for('index'))
+    form.organisation.choices = [(value.slug,value.name) for value in Listing.query.all()]
 
-    welcomeMessage = organisation.name
-    welcomeDescription ="Welcome to "+organisation.name+" onboarding portal. Please enter your details to create your account and get started."
-
-    if current_user:
-        logout_user()
-        print ("You have been logged out")
-    if form.validate_on_submit():
-        print(form.data)
-        # check email
-        if User.query.filter_by(email = form.email.data).first() != None:
-            print("user")
-            flash(f'There is already a user with this email address')
-            return render_template('register.html', form=form, title="Onboard New User")
+    if request.method == 'GET':
+        if organisationslug != None: #Default route
+            organisation = Listing.query.filter_by(slug=organisationslug).first()
             
-        elif User.query.filter_by(phone = form.phone.data).first() != None:
-            flash(f'There is already a user with this phone number')
-            return render_template('register.html', form=form, title="Onboard New User")
+            if organisation == None:
+                flash(f'There was no organisation with this slug, please check and try again.')
+            else:
+                welcomeMessage = organisation.name
+                welcomeDescription ="Welcome to "+organisation.name+" onboarding portal. Please enter your details to create your account and get started."
+                form.organisation.data = organisation.name
+
+        if current_user:
+            logout_user()
+            print ("You have been logged out")
         
-        else:
-            listing = organisation
-
-            hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-            newuser = User(username=form.username.data, email=form.email.data, phone=form.phone.data, listing=organisation.slug, listingSlug=organisation.slug, password=hashed_password)
-            print(newuser)
-            try:
-                db.session.add(newuser)
-                db.session.commit()
-                send_sms(newuser.phone, "You have been successfully onboarded to "+organisation.name+". \nhttps://stay.prestoghana.com/recpay" + str(newuser.id) +  " \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
-                sendTelegram(newuser.phone, newuser.username +" : " + newuser.phone + "has onboarded to PrestoPay. \nhttps://stay.prestoghana.com/profile/ \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
-                return redirect(url_for('sublisting', userId=newuser.id))
-            except Exception as e:
-                print(e)
-                print("User was not able to be created")
-            print("Registered new user: " + newuser.username + " " + newuser.email)
+    elif request.method=='POST':
+        if form.validate_on_submit():
+            print(form.data)
+            # check email
+            if User.query.filter_by(email = form.email.data).first() != None:
+                print("user")
+                flash(f'There is already a user with this email address')
+                return render_template('register.html', form=form, title="Onboard New User")
+                
+            elif User.query.filter_by(phone = form.phone.data).first() != None:
+                flash(f'There is already a user with this phone number')
+                return render_template('register.html', form=form, title="Onboard New User")
             
-            print(form.password.data)
-            print(form.confirm_password.data)
+            else:
 
-            user = User.query.filter_by(email=form.email.data).first()
+                hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+                newuser = User(username=form.username.data, email=form.email.data, phone=form.phone.data, listing=form.organisation.data, listingSlug=form.organisation.data, password=hashed_password)
+                print(newuser)
+                try:
+                    db.session.add(newuser)
+                    db.session.commit()
+                    send_sms(newuser.phone, "You have been successfully onboarded to "+organisation.name+". \nhttps://stay.prestoghana.com/recpay" + str(newuser.id) +  " \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
+                    sendTelegram(newuser.phone, newuser.username +" : " + newuser.phone + "has onboarded to PrestoPay. \nhttps://stay.prestoghana.com/profile/ \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
+                    return redirect(url_for('sublisting', userId=newuser.id))
+                except Exception as e:
+                    print(e)
+                    print("User was not able to be created")
+                print("Registered new user: " + newuser.username + " " + newuser.email)
+                
+                print(form.password.data)
+                print(form.confirm_password.data)
 
-            return redirect(url_for('recpay', userId=user.id))
-    else:
-        print(form.errors)
-    return render_template('register.html', welcomeDescription=welcomeDescription, form=form, title=title, welcomeMessage=welcomeMessage)
+                user = User.query.filter_by(email=form.email.data).first()
+
+                return redirect(url_for('pay', userId=user.id))
+        else:
+            print(form.errors)
+
+
+    
+    
+
+    return render_template('register.html', organisation=organisation,welcomeDescription=welcomeDescription, form=form, title=title, welcomeMessage=welcomeMessage)
 
 
 @app.route('/maps', methods=['GET', 'POST'])
@@ -1008,7 +1036,7 @@ def get_user_location():
         # Get the user's public IP address using a service like ipinfo.io
         ip_response = requests.get('https://ipinfo.io')
         ip_data = ip_response.json()
-        user_ip = ip_data.get('ip')
+        user_ip = ip_data.get('ip')     
 
         # Use the user's IP address to fetch geolocation data
         geo = geocoder.ip(user_ip)
@@ -1063,7 +1091,7 @@ def findme():
 
 
 @app.route('/recpay', methods=['GET', 'POST'])
-@app.route('/recpay/<string:organisationSlug>', methods=['GET', 'POST'])
+@app.route('/<string:organisationSlug>', methods=['GET', 'POST'])
 
 def recpay(organisationSlug = None):
     form = FindRecUser()
@@ -1073,7 +1101,11 @@ def recpay(organisationSlug = None):
 
     if organisationSlug != None:
         organisation = Listing.query.filter_by(slug=organisationSlug).first()
-        form.organisation.data = organisation.name
+        
+        if organisation is not None:
+            form.organisation.data = organisation.name
+        else:
+            flash(f'No organisation with slug:'+organisationSlug+' was found. Please choose from the dropdown')
 
     tempUserBody = {
         "name":"Make A Recurring Payment",
@@ -1085,12 +1117,12 @@ def recpay(organisationSlug = None):
         print("phoneNumber")
         print(phoneNumber)
 
-        user = User.query.filter(User.phone.endswith(phoneNumber)).first()
-        listing = Listing.query.filter_by(slug="")
+        listing = Listing.query.filter_by(name=form.organisation.data).first()
+        user = User.query.filter(User.phone.endswith(phoneNumber), User.listingSlug==listing.slug).first()
         
         print(user)
         if user is None:
-            flash(f'We couldnt find anyone with this phone number.')
+            flash(f'We couldnt find anyone with this phone number in '+listing.name+' please check and try again.')
             return redirect(url_for('findme'))
         
         return redirect(url_for('pay', userId=user.id))
@@ -1098,37 +1130,37 @@ def recpay(organisationSlug = None):
 
 
 
-@app.route('/recpay/<int:userId>', methods=['GET','POST'])
-def recpayId(userId):
-    user = User.query.get_or_404(userId)
-    form = PaymentForm()
-    listing = Listing.query.filter_by(slug=user.listingSlug).first()
-    if request.method == 'POST':
-        if form.validate_on_submit():
+# @app.route('/recpay/<int:userId>', methods=['GET','POST'])
+# def recpayId(userId):
+#     user = User.query.get_or_404(userId)
+#     form = PaymentForm()
+#     listing = Listing.query.filter_by(slug=user.listingSlug).first()
+#     if request.method == 'POST':
+#         if form.validate_on_submit():
 
-            body={
-                "userId":user.id,
-                "appId":listing.slug,
-                "username":user.username,
-                "roomID":user.roomNumber,
-                "listing":user.listing,
-                "amount":form.amount.data,
-                "balanceBefore":user.balance,
-                # "account":form.account.data, 
-                # "network":form.network.data,
-                "channel":"WEB"
-            }
+#             body={
+#                 "userId":user.id,
+#                 "appId":listing.slug,
+#                 "username":user.username,
+#                 "roomID":user.roomNumber,
+#                 "listing":user.listing,
+#                 "amount":form.amount.data,
+#                 "balanceBefore":user.balance,
+#                 # "account":form.account.data, 
+#                 # "network":form.network.data,
+#                 "channel":"WEB"
+#             }
 
-            transaction = createTransaction(body)
+#             transaction = createTransaction(body)
 
-            response = externalPay(transaction)
+#             response = externalPay(transaction)
 
-            return redirect(response["url"])
+#             return redirect(response["url"])
 
-        else:
-            print(form.errors)
-            flash(form.errors[0])
-    return render_template('confirmUser.html', user=user, form=form)
+#         else:
+#             print(form.errors)
+#             flash(form.errors[0])
+#     return render_template('confirmUser.html', user=user, form=form)
 
 @app.route('/pay/<int:userId>', methods=['GET','POST'])
 def pay(userId):
@@ -1146,6 +1178,7 @@ def pay(userId):
                 "listing":user.listing,
                 "amount":form.amount.data,
                 "balanceBefore":user.balance,
+                # "transactionType":form.transactionType.data,
                 # "account":form.account.data, 
                 # "network":form.network.data,
                 "channel":"WEB"
@@ -1169,8 +1202,7 @@ def pay(userId):
 
         else:
             print(form.errors)
-            flash(form.errors[0])
-    return render_template('confirmUser.html', user=user, form=form)
+    return render_template('confirmUser.html', user=user, listing=listing, form=form)
 
 @app.route('/subSlugs/<string:listingSlug>', methods=['GET', 'POST'])
 def createSubListingSlugs(listingSlug):
@@ -1200,6 +1232,16 @@ def updateSubListing(userId, subListingSlug):
         user.sublistingSlug = subListingSlug
         user.fullAmount += float(sublisting.pricePerBed)
         user.roomNumber = sublisting.name
+
+        # Confirming it will not show here more when unvacant
+        sublisting.bedsTaken = int(sublisting.bedsTaken) + 1
+        if user.roomNumber:
+            pass
+            # find the room and set the occupancy minus one
+        if int(sublisting.bedsTaken) == int(sublisting.bedsAvailable):
+            sublisting.vacant = False
+        else:
+            sublisting.vacant = True
         db.session.commit()
     except Exception as e:
         print(e)
@@ -1239,7 +1281,7 @@ def sublisting(userId):
     print(user)
     print("listing", listing)
     form = ListingForm()
-    sublistings = SubListing.query.filter_by(superListing=user.listing).all()
+    sublistings = SubListing.query.filter_by(superListing=user.listing, vacant=True).all()
     # print(sublistings)
     print(user.sublisting)    
     
@@ -1247,7 +1289,7 @@ def sublisting(userId):
 
 
     sublistingform.location.choices = [value[0] for value in db.session.query(SubListing.location).distinct().all()] 
-    sublistingform.location.choices.insert(0,'All Floors')
+    sublistingform.location.choices.insert(0,('All Floors'))
 
     sublistingform.bedsAvailable.choices = [value[0] + " in a room" for value in db.session.query(SubListing.bedsAvailable).distinct().all()] 
     sublistingform.bedsAvailable.choices.insert(0,'All Beds')
@@ -1260,10 +1302,38 @@ def sublisting(userId):
             try:
                 print("sublistingform.location.data")
                 print(sublistingform.location.data)
-                sublistingsData = SubListing.query.filter_by(location=sublistingform.location.data, bedsAvailable=sublistingform.bedsAvailable.data[0])
-                sublistings = sublistingsData.all()
-                if sublistingsData.count() == 0:
-                    message = 'Unfortunately, there were no listings found. Please try to search again.'
+                # sublistingsData = SubListing.query.filter_by(location=sublistingform.location.data, bedsAvailable=sublistingform.bedsAvailable.data[0])
+                # sublistingsData =  db.query.filter(or_(Sublisting.location != 'All Floors')).all()
+                # sublistingsData = SubListing.query.filter(SubListing.vacant == True).all()
+
+                # queryList = [sublistingform.location.data, sublistingform.bedsAvailable.data, sublistingform.size.data]
+
+                # THIS COULD WORK
+                # Now, you can query vacant from the results of the first query
+
+
+                if sublistingform.location.data != 'All Floors':
+                    sublistings = [listing for listing in sublistings if listing.location == sublistingform.location.data]
+                if sublistingform.bedsAvailable.data != 'All Beds':
+                    sublistings = [listing for listing in sublistings if listing.bedsAvailable == sublistingform.bedsAvailable.data[0]]
+                if sublistingform.size.data != 'All Sizes':
+                    sublistings = [listing for listing in sublistings if listing.size == sublistingform.size.data]
+
+
+                    
+
+                    # check to see if the value is not None
+
+                print(sublistings)
+
+                # sublistingsData = SubListing.query.filter(SubListing.location != 'Terrace')
+
+
+                # print(sublistingsData)
+
+                # sublistings = sublistingsData.all()
+                # if sublistingsData.count() == 0:
+                #     message = 'Unfortunately, there were no listings found. Please try to search again.'
             except Exception as e:
                 print(e)
         else:
@@ -1348,10 +1418,10 @@ def confirm(transactionId):
                 print("send_sms || PrestoStay)")
                 send_sms(transaction.account, message)
 
-                responseMessage = transaction.listing + "\nSuccessfully bought " +str(transaction.amount) + " for " + str(transaction.username) + "." + "\nBefore: " + str(transaction.balanceBefore) + "\nAfter: "+ str(transaction.balanceAfter) + "\nTransactionId:" + str(transaction.id) + "\nAccount:" + str(transaction.network) + " : "+ str(transaction.account) + "\LedgerId: " + str(entry.id)
+                responseMessage = transaction.listing + "\nSuccessfully bought " +str(transaction.amount) + " for " + str(transaction.username) + "." + "\nBefore: " + str(transaction.balanceBefore) + "\nAfter: "+ str(transaction.balanceAfter) + "\nTransactionId:" + str(transaction.id) + "\nAccount:" + str(transaction.network) + " : "+ str(transaction.account) + "\nLedgerId: " + str(entry.id)
                 print(responseMessage)
                 print(responseMessage)
-                sendTelegram(responseMessage)
+                # sendTelegram(responseMessage)
                 flash(f'This transaction was successful! You should recieve and sms.')
             else:
                 app.logger.error("Transaction: " + str(transaction.id) + " was attempting to be recreated.")

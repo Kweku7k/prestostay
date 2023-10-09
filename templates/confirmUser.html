@@ -14,14 +14,18 @@
                     </div>
 
                     <h1 class="heading" style="text-align: center; margin-top: 5vh;">{{user.username}}</h1>
-                    <!-- <h6 style="text-align: center; width: 100%; " class="text-muted">{{user.listing}} </h6>    -->
+                    <h6 style="text-align: center; width: 100%; " class="text-muted">{{listing.name}} </h6>   
                     <!-- <h6 style="text-align: center; width: 100%; ">{{user.phone}} </h6>    -->
                     
                     <br/>
 
                     <div class="flexBar"><h6>Name</h6><h6 class="text-muted">{{user.username}}</h6></div>
-                    <div class="flexBar"><h6>Room Number</h6><h6 class="text-muted">{{user.roomNumber}}</h6></div>
-                    <!-- <div class="flexBar"><h6>Amount Paid</h6><h6 class="text-muted">GHS {{user.paid}}</h6></div> -->
+
+
+                    {% if user.roomNumber %}
+                        <div class="flexBar"><h6>Room Number</h6><h6 class="text-muted">{{user.roomNumber}}</h6></div>
+                    {% endif %}
+                        <!-- <div class="flexBar"><h6>Amount Paid</h6><h6 class="text-muted">GHS {{user.paid}}</h6></div> -->
                     <!-- <div class="flexBar"><h6>Date Due</h6><h6 class="text-muted">undefined</h6></div> -->
                     <!-- <div class="flexBar"><h6>Status</h6><h6 class="text-muted">{{user.status}}</h6></div> -->
                     

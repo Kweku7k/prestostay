@@ -42,6 +42,16 @@
                     {% endfor %}
                 </div>
 
+                {% if organisation == None %}
+                <div class="inputTextHolder">
+                    <h6>{{form.organisation.label}}</h6>
+                    {{form.organisation (class="inputTextCard", placeholder="Please enter your organisation number")}}
+                    {% for error in form.organisation.errors %}
+                    <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
                
 
                 <div class="inputTextHolder">

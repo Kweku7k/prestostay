@@ -34,6 +34,7 @@ class PaymentForm(FlaskForm):
     name = StringField('Name')
     amount = StringField('Transaction Amount', validators=[DataRequired()])
     indexNumber = StringField('Index Number')
+    # transactionType = SelectField('Transaction Type', choices=['Default'])
     # account = StringField('Phone', validators=[Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
     note = StringField('Leave A Note.')
     submit = SubmitField('Proceed')
