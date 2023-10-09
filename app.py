@@ -9,7 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Enum, func
 from itsdangerous import Serializer
 from flask_bcrypt import Bcrypt
-from utils import apiResponse, send_sms, sendTelegram  
+from utils import apiResponse, send_sms, sendTelegram, reportTelegram  
 from forms import *
 import pprint
 import time
@@ -216,6 +216,8 @@ class Transactions(db.Model):
     ref = db.Column(db.String) #notsupersure?
     prestoTransactionId = db.Column(db.Integer)
     channel = db.Column(db.String)
+    telegramChatId = db.Column(db.String)
+
     
     def __repr__(self):
         return f"Transaction(': {self.id}', 'Amount:{self.amount}', 'User:{self.username}', 'Paid:{self.paid}')"
@@ -700,6 +702,28 @@ def uploadRoomData(filename, listing):
             
     return message
 
+
+   
+@app.errorhandler(500)
+def internal_server_error(error):
+    app.logger.error(error)
+    print("error")
+    print(error)
+
+    error_message = str(error)
+
+      # Check if the error_message contains "500 Internal Server Error" (default Flask message)
+    # if error_message == "500 Internal Server Error":
+        # If it's the default message, try to extract the original exception message
+    original_exception = getattr(error, "original_exception", None)
+    if original_exception:
+        error_message = str(original_exception)
+        print("====================")
+        print(error_message)
+
+        reportTelegram(error_message)
+    
+    return render_template('500.html'), 500
 
 
         

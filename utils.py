@@ -1,6 +1,7 @@
 import urllib.request, urllib.parse
 import urllib
 import time
+import requests
 
 prestoBot = "5876869228:AAFk644pEKRBnEhZ6jbG2nXRlj4fsyZEYgg"
 prestoStayGroup = "4050514650"
@@ -14,6 +15,29 @@ def sendTelegram(params):
     except Exception as e:
         print(e)
         return e
+    
+def reportTelegram(error_message):
+
+    # Construct the Telegram message
+    telegram_message = f"500 Internal Server Error: {error_message}"
+
+
+    url = f"https://api.telegram.org/bot{prestoBot}/sendMessage"
+    
+    try:
+        response = requests.post(url, json={
+            'chat_id': prestoStayGroup,
+            'text': telegram_message
+        })
+
+        if response.status_code == 200:
+            print('Message sent to Telegram successfully!')
+        else:
+            print(f'Error sending message to Telegram. HTTP {response.status_code} - {response.text}')
+    
+    except Exception as e:
+        print(f'An error occurred while sending the Telegram message: {str(e)}')
+    
     
 
 def apiResponse(code, message, data, startTime):
