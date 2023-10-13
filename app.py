@@ -9,7 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Enum, func
 from itsdangerous import Serializer
 from flask_bcrypt import Bcrypt
-from utils import apiResponse, send_sms, sendTelegram, reportTelegram  
+from utils import apiResponse, send_sms, sendTelegram, sendVendorTelegram, reportTelegram  
 from forms import *
 import pprint
 import time
@@ -42,8 +42,8 @@ merchantID = "ec5fb5b5-2b80-4a9a-b522-24c90912f106"
 
 environment = os.environ["ENVIRONMENT"]
 # This value confirms the server is not null
-# server = os.environ["SERVER"]
-server = "SERVER"
+server = os.environ["SERVER"]
+# server = "SERVER"
 
 
 #  ----- LOGIN MANAGER
@@ -87,6 +87,7 @@ class Listing(db.Model):
     name = db.Column(db.String, nullable=False)
     email = db.Column(db.String)
     phone = db.Column(db.String)
+    chatId = db.Column(db.String)
     logo = db.Column(db.String)
     description = db.Column(db.String)
     expectedRevenue = db.Column(db.Float)
@@ -114,6 +115,7 @@ class SubListing(db.Model):
     quantity = db.Column(db.Integer, default=0)
     divideCost = db.Column(db.Boolean, default=True)
     superListing = db.Column(db.String)
+    chatId = db.Column(db.String)
     listingSlug = db.Column(db.String)
     # dismissable fields
     block = db.Column(db.String)
@@ -1404,6 +1406,7 @@ def confirm(transactionId):
 
     message = "In Progress"
     transaction = Transactions.query.get_or_404(transactionId)
+    listing = Listing.query.filter_by(slug=transaction.listing).first()
     # SECURE THIS ROUTE
 
     if transaction.paid == False:
@@ -1416,6 +1419,7 @@ def confirm(transactionId):
             transaction.ref = transactionRef
             transaction.account = body.get("account")
             transaction.channel = body.get("channel")
+
             db.session.commit()
         except Exception as e:
             print(e)
@@ -1436,8 +1440,8 @@ def confirm(transactionId):
 
                 responseMessage = transaction.listing + "\nSuccessfully bought " +str(transaction.amount) + " for " + str(transaction.username) + "." + "\nBefore: " + str(transaction.balanceBefore) + "\nAfter: "+ str(transaction.balanceAfter) + "\nTransactionId:" + str(transaction.id) + "\nAccount:" + str(transaction.network) + " : "+ str(transaction.account) + "\nLedgerId: " + str(entry.id)
                 print(responseMessage)
-                print(responseMessage)
-                # sendTelegram(responseMessage)
+                sendTelegram(responseMessage)
+                sendVendorTelegram(responseMessage, listing.chatId)
                 flash(f'This transaction was successful! You should recieve and sms.')
             else:
                 app.logger.error("Transaction: " + str(transaction.id) + " was attempting to be recreated.")

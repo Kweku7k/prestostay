@@ -16,6 +16,16 @@ def sendTelegram(params):
         print(e)
         return e
     
+def sendVendorTelegram(params,chatId):
+    try:
+        url = "https://api.telegram.org/bot"+prestoBot+"/sendMessage?chat_id=-"+chatId+"&text=" + urllib.parse.quote(params)
+        content = urllib.request.urlopen(url).read()
+        print(content)
+        return content
+    except Exception as e:
+        print(e)
+        return e
+    
 def reportTelegram(error_message):
 
     # Construct the Telegram message
