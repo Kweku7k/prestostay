@@ -42,7 +42,7 @@
                     {% endfor %}
                 </div>
 
-                {% if organisation == None %}
+                {% if organisation != None %}
                 <div class="inputTextHolder">
                     <h6>{{form.organisation.label}}</h6>
                     {{form.organisation (class="inputTextCard", placeholder="Please enter your organisation number")}}
