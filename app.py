@@ -90,14 +90,15 @@ class Listing(db.Model):
     chatId = db.Column(db.String)
     logo = db.Column(db.String)
     description = db.Column(db.String)
-    expectedRevenue = db.Column(db.Float)
-    amountRecieved = db.Column(db.Float)
-    amountDue = db.Column(db.Float)
+    expectedRevenue = db.Column(db.Float, default=0.0)
+    amountRecieved = db.Column(db.Float, default=0.0)
+    amountDue = db.Column(db.Float, default=0.0)
     description = db.Column(db.String)
     location = db.Column(db.String)
     locationTag = db.Column(db.String)
     images = db.Column(db.String)
     slug = db.Column(db.String)
+    type = db.Column(db.String)
     latitude = db.Column(db.String)
     longitude = db.Column(db.String)
     suggestions = db.Column(db.String)
@@ -117,6 +118,7 @@ class SubListing(db.Model):
     superListing = db.Column(db.String)
     chatId = db.Column(db.String)
     listingSlug = db.Column(db.String)
+    accountType = db.Column(db.String)
     # dismissable fields
     block = db.Column(db.String)
     roomId = db.Column(db.String)
@@ -924,14 +926,14 @@ def editsublisting(sublisting):
 
 
 @app.route('/allusers', methods=['GET', 'POST'])
+# @login_required
 def getallusers():
-    users = User.query.all()
+    users = User.query.filter_by(listingSlug = 'mmogcc').all()
     return render_template('allusers.html', users=users)
 
 @app.route('/onboard', methods=(['POST','GET']))
 def onboard():
     form = OnboardForm()
-
     form.listing.choices = [(listing.slug, listing.name) for listing in Listing.query.all()]
     if current_user:
         logout_user()
@@ -1118,9 +1120,10 @@ def findme():
 
 @app.route('/recpay', methods=['GET', 'POST'])
 @app.route('/<string:organisationSlug>', methods=['GET', 'POST'])
-
 def recpay(organisationSlug = None):
     form = FindRecUser()
+    loadingMessage = 'Attempting to log you in.'
+
     print(form.data)
 
     form.organisation.choices = [value.name for value in Listing.query.all()]
@@ -1132,6 +1135,7 @@ def recpay(organisationSlug = None):
             form.organisation.data = organisation.name
         else:
             flash(f'No organisation with slug:'+organisationSlug+' was found. Please choose from the dropdown')
+            
 
     tempUserBody = {
         "name":"Make A Recurring Payment",
@@ -1149,10 +1153,10 @@ def recpay(organisationSlug = None):
         print(user)
         if user is None:
             flash(f'We couldnt find anyone with this phone number in '+listing.name+' please check and try again.')
-            return redirect(url_for('findme'))
+            return redirect(url_for('recpay', organisationSlug=organisationSlug))
         
         return redirect(url_for('pay', userId=user.id))
-    return render_template('recpay.html', current_user=None, form=form, user=tempUserBody)
+    return render_template('recpay.html', current_user=None, loadingMessage=loadingMessage, form=form, user=tempUserBody)
 
 
 
@@ -1193,9 +1197,12 @@ def pay(userId):
     user = User.query.get_or_404(userId)
     form = PaymentForm()
     listing = Listing.query.filter_by(slug=user.listingSlug).first()
+    choices = TransactionType.query.filter_by(superListing=user.listingSlug).all()
+
+    if len(choices) > 0:
+        form.transactionType.choices = [transactionType.name for transactionType in choices]
     if request.method == 'POST':
         if form.validate_on_submit():
-
             body={
                 "userId":user.id,
                 "appId":listing.slug,
@@ -1204,7 +1211,7 @@ def pay(userId):
                 "listing":user.listing,
                 "amount":form.amount.data,
                 "balanceBefore":user.balance,
-                # "transactionType":form.transactionType.data,
+                "transactionType":form.transactionType.data,
                 # "account":form.account.data, 
                 # "network":form.network.data,
                 "channel":"WEB"
@@ -1229,6 +1236,14 @@ def pay(userId):
         else:
             print(form.errors)
     return render_template('confirmUser.html', user=user, listing=listing, form=form)
+
+@app.route('/logout', methods=['GET', 'POST'])
+def logout():
+    pass
+
+@app.route('/broadcast', methods=['GET', 'POST'])
+def broadcast():
+    pass
 
 @app.route('/subSlugs/<string:listingSlug>', methods=['GET', 'POST'])
 def createSubListingSlugs(listingSlug):
@@ -1406,6 +1421,7 @@ def confirm(transactionId):
 
     message = "In Progress"
     transaction = Transactions.query.get_or_404(transactionId)
+    print(transaction)
     listing = Listing.query.filter_by(slug=transaction.listing).first()
     # SECURE THIS ROUTE
 
@@ -1433,12 +1449,15 @@ def confirm(transactionId):
             if entry != None: #If a vote was created
                 # message = "You have successfully bought " + str(entry.amount) + " vote(s) for " + transaction.username + "\n TransactionID: " + str(transaction.id)+"PRS"+str(transaction.ref) + "\n \n Powered By PrestoStay"
                 
-                message = "Student Name:"+ str(transaction.username) + "\nHostel Name: "+transaction.listing + "\nAmount:" + str(transaction.amount) + "\nPayment Method:"+transaction.channel + "\nPayment  Date" + transaction.date_created.strftime("%Y-%m-%d %H:%M:%S") + "\nReceipt Number: PRS" + str(transaction.id) + "REF" + str(transaction.ref) +"\nYour payment has been received successfully!."
-
+                if listing.slug == 'prontohostel':
+                    responseMessage = transaction.listing + "\nSuccessfully bought " +str(transaction.amount) + " for " + str(transaction.username) + "." + "\nBefore: " + str(transaction.balanceBefore) + "\nAfter: "+ str(transaction.balanceAfter) + "\nTransactionId:" + str(transaction.id) + "\nAccount:" + str(transaction.network) + " : "+ str(transaction.account) + "\nLedgerId: " + str(entry.id)
+                    message = "Student Name:"+ str(transaction.username) + "\nHostel Name: "+transaction.listing + "\nAmount:" + str(transaction.amount) + "\nPayment Method:"+transaction.channel + "\nPayment  Date" + transaction.date_created.strftime("%Y-%m-%d %H:%M:%S") + "\nReceipt Number: PRS" + str(transaction.id) + "REF" + str(transaction.ref) +"\nYour payment has been received successfully!."
+                else:
+                    message = f'Hello '+  str(transaction.username) +' your '+ str(transaction.transactionType) +' payment of GHS' + str(transaction.amount) +' has been recieved successfully.\n\nPowered By PrestoGhana'
+                    responseMessage = message
                 print("send_sms || PrestoStay)")
                 send_sms(transaction.account, message)
 
-                responseMessage = transaction.listing + "\nSuccessfully bought " +str(transaction.amount) + " for " + str(transaction.username) + "." + "\nBefore: " + str(transaction.balanceBefore) + "\nAfter: "+ str(transaction.balanceAfter) + "\nTransactionId:" + str(transaction.id) + "\nAccount:" + str(transaction.network) + " : "+ str(transaction.account) + "\nLedgerId: " + str(entry.id)
                 print(responseMessage)
                 sendTelegram(responseMessage)
                 sendVendorTelegram(responseMessage, listing.chatId)
@@ -1489,7 +1508,7 @@ def login():
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
-    listing = Listing.query.get_or_404(1)
+    listing = Listing.query.get_or_404(8)
     activeUsers = User.query.filter_by(listingSlug = listing.slug).count()
     amountRecieved = listing.amountRecieved
     expected_revenue = listing.expectedRevenue
@@ -1509,14 +1528,19 @@ def dashboard():
     Transactions.paid == True,
     Transactions.appId == "pronto"
     ).all()
+
+    transactions = Transactions.query.filter_by(appId =listing.slug).count()
+    successfulTransactions = Transactions.query.filter_by(appId =listing.slug, paid=True).count()
     
     todaysBalance = sum(transaction.amount for transaction in todaysTransactions)
     totalTodayTransactions = len(todaysTransactions)
 
     occupied = 0
-    
+
+    contacts = User.query.filter_by(listingSlug='mmogcc').count()   
+    transactionTypes = TransactionType.query.filter_by(superListing='mmogcc').count() 
     print(activeUsers)
-    return render_template('dashboard.html', cashTransactions=cashTransactions ,user=current_user, occupied=occupied,sublistings=sublistings, totalTodayTransactions=totalTodayTransactions,listing=listing, activeUsers=activeUsers, totalTransasactions=totalTransasactions,todaysBalance=todaysBalance,amountRecieved=amountRecieved, due=due,expected_revenue=expected_revenue)
+    return render_template('dashboard.html', successfulTransactions=successfulTransactions,transactions=transactions, transactionTypes=transactionTypes,cashTransactions=cashTransactions, contacts=contacts ,user=current_user, occupied=occupied,sublistings=sublistings, totalTodayTransactions=totalTodayTransactions,listing=listing, activeUsers=activeUsers, totalTransasactions=totalTransasactions,todaysBalance=todaysBalance,amountRecieved=amountRecieved, due=due,expected_revenue=expected_revenue)
 
 
 
@@ -1568,7 +1592,7 @@ def upload(listingSlug, dataType = None):
 @app.route('/transactions/<int:userId>', methods=['GET', 'POST'])
 def usertransactions(userId):
     user = User.query.get_or_404(userId)
-    transactions = Transactions.query.filter_by(userId = str(user.id), paid=True).all()
+    transactions = Transactions.query.filter_by(userId = str(user.id), paid=True).order_by(Transactions.id.desc()).all()
     print(transactions)
     return render_template('alltransactions.html', user=user,transactions=transactions)
 

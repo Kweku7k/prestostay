@@ -50,13 +50,13 @@
                         </div>
 
 
-                        <div class="inputTextHolder">
+                        <!-- <div class="inputTextHolder">
                             <h6>{{form.indexNumber.label}}</h6>
                             {{form.indexNumber (class="inputTextCard", placeholder="How much are you sending")}}
                             {% for error in form.indexNumber.errors %}
                             <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                             {% endfor %}
-                        </div>
+                        </div> -->
 
 
                         <div class="inputTextHolder">
@@ -68,14 +68,7 @@
                         </div>
 
 
-                        <div class="inputTextHolder">
-                            <h6>{{form.phone.label}}</h6>
-                            {{form.phone (class="inputTextCard", placeholder="How much are you sending")}}
-                            {% for error in form.phone.errors %}
-                            <h6 style="color: red; font-weight: 100;">{{error}}</h6>
-                            {% endfor %}
-                        </div>
-
+                    
                         <div class="row justify-content-center align-items-center g-2">
                         <div class="col">
                             <div class="inputTextHolder">
@@ -106,7 +99,7 @@
                             </div>
                         </div>
                     </div>
-                        {{form.submit(class="pill-button", onclick="showLoadingScreen(), style="width: 100%; margin-top:5vh;")}}
+                        {{form.submit(class="pill-button", onclick="showLoadingScreen()", style="width: 100%; margin-top:5vh;")}}
                     </form>
                 </div>
             </div>

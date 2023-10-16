@@ -5,16 +5,19 @@
 <div class="container">
     <br/>
 
-    <h4>All Your Tenants</h4>
+    <h4>All Your Users</h4>
     <h6 class="text-muted">Total Number?</h6>
 
     <br/>
     {% for user in users %}
-    <a href="{{url_for('pay',userId=user.id )}}">
+    <a href="{{url_for('profile',id=user.id )}}">
         <div class="card row" style=" display: flex; justify-content: space-between; padding: 20px; flex-direction: row;">
             <div style="width:fit-content; ">
                 <h6 style="width: fit-content;">{{user.id}} . {{user.username}} - Ghc{{user.paid}} </h6>
+                {% if user.balance > 0 %}
                 <h6 style="color: red;">GHC{{user.balance}}</h6>
+                
+                {% endif %}
             </div>
 
             <div style="width:fit-content; display: flex; align-items: center; ">
@@ -25,6 +28,7 @@
                 {% elif user.status == '4' %}
                 <div class="statusEllipse-pending"></div>
                 {% endif %}
+                Delete
             </div>
         </div>
     </a>

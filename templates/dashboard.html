@@ -7,189 +7,219 @@
 {% block body %}
 <div class="container">
 <div class="info-block" style="margin-top: 5vh;">
-
     <div class="flexBar">
         <div>
             <h4>Dashboard</h4>
             <h6 class="text-muted">{{listing.name}}</h6>
         </div>
-            <a href="{{url_for('updateBalance')}}">
-                <button class="pill-button">Refresh Values</button>
-            </a>
+        <!-- {% if listing.active == True %}
+        <h6 class="active">Active</h6>
+        {% else %}
+        <h6 class="active">InActive</h6>
+        {% endif %} -->
     </div>
 <br>
-
-
-
 <div class="row">
     <div class="col-md-3 col-6">
-        <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
-            <div data-aos="fade-up" class="card">
-                <h6>Amount Recieved</h6>
-                <h2 style="font-weight: 700;">GHS {{amountRecieved}}</h2>
-                <!-- <h6 class="text-muted">View Ledger</h6> -->
-            </div>
-        </a>
-    </div> 
-    
-    <div class="col-md-3 col-6">
-        <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
-            <div data-aos="fade-up" class="card">
-                <h6>Expected Revenue</h6>
-                <h2 style="font-weight: 700;">GHS {{expected_revenue}}</h2>
-                <!-- <h6 class="text-muted">Transactions</h6> -->
-            </div>
-        </a>
-    </div> 
-
-    <div class="col-md-3 col-6">
-        <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
-            <div data-aos="fade-up" class="card">
-                <h6>Cash Transactions</h6>
-                <h2 style="font-weight: 700;">GHS {{cashTransactions}}</h2>
-                <!-- <h6 class="text-muted">{{totalTodayTransactions}} Transaction(s)</h6> -->
-            </div>
-        </a>
-    </div> 
-        
-    <div class="col-md-3 col-6">
-        <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
-            <div data-aos="fade-up" class="card">
-                <h6>Amount Due</h6>
-                <h2 style="font-weight: 700;">GHS {{due}}</h2>
-                <!-- <h6 class="text-muted">{{successfulTransaction}} Transactions</h6> -->
-            </div>
-        </a>
-    </div> 
-    </div>
-
-    <div class="flexBar">
-        <div>
-            <h4>Sublisting Sumarry</h4>
-            <h6 class="text-muted">{{listing.name}}</h6>
-        </div>
-            <a href="{{url_for('mysublistings') }}">
-                <button class="pill-button">Edit Sublisting</button>
+            <a href="https://prestoghana.com/dashboard">
+                <div data-aos="fade-up" class="card">
+                    <h6>Amount Made </h6>
+                    <h2 style="font-weight: 700;">GHS{{amountRecieved}}</h2>
+                    <h6 class="text-muted">{{successfulTransactions}} Successful Transaction </h6>
+                </div>
             </a>
-    </div>
-<br/>
-    <div class="row">
-    
 
-        <div class="col-md-3 col-6">
+    </div> 
     
-                <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
-                    <div data-aos="fade-up" class="card">
-                        <h6>Total SubListings</h6>
-                        <h2 style="font-weight: 700;">{{sublistings}}</h2>
-                    </div>
-                </a>
-            </div> 
-    
-        
-       
-        
-        <div class="col-md-3 col-6">
-            <a class="link" >
+    <div class="col-md-3 col-6">
+
+            <a href="{{url_for('getallusers')}}">
+
                 <div data-aos="fade-up" data-aos-delay="100" class="card">
-                    <h6>Fully Occupied</h6>
-                    <h2 style="font-weight: 700;">{{occupied}}</h2>
-
+                    <h6>Contacts </h6>
+                    <h2 style="font-weight: 700;">{{contacts}}</h2>
+                    <h6><u>View all</u></h6>
                 </div>
             </a>
-        </div>
-
+                
     </div>
     
+    <div class="col-md-3 col-6">
 
-<div class="row">
 
-    <h4>Bed Summary</h4>
-    <br/>
-    <!-- <h6 class="text-muted">Home And Away</h6> -->
+        <a href="#">
+            <div data-aos="fade-up" data-aos-delay="100" class="card">
+                <h6>Transaction Types</h6>
+                <h2 style="font-weight: 700;">{{transactionTypes}}</h2>
+                <h6><u>View all</u></h6>
+            </div>
+        </a>
         
-    <div class="col-md-3 col-6">
-            <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
-                <div data-aos="fade-up" class="card">
-                    <h6>Beds Taken</h6>
-                    <h2 style="font-weight: 700;">{{expected_revenue}}</h2>
-                    <h6 class="text-muted">{{successfulTransaction}} Transactions</h6>
-                </div>
-            </a>
-    </div> 
-
-    <div class="col-md-3 col-6">
-        <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
-            <div data-aos="fade-up" class="card">
-                <h6>Beds Avaiable</h6>
-                <h2 style="font-weight: 700;">{{expected_revenue}}</h2>
-                <h6 class="text-muted">{{successfulTransaction}} Transactions</h6>
-            </div>
-        </a>
-</div> 
-
-<div class="col-md-3 col-6">
-    <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
-        <div data-aos="fade-up" class="card">
-            <h6>Beds Remaining</h6>
-            <h2 style="font-weight: 700;">{{expected_revenue}}</h2>
-            <h6 class="text-muted">{{successfulTransaction}} Transactions</h6>
-        </div>
-    </a>
-</div> 
-</div>
-
-
-<div class="row">
-    <div class="flexBar">
-        <div>
-            <h4>Occupancy Summary</h4>
-            <h6 class="text-muted">{{listing.name}}</h6>
-        </div>
-            <a href="{{url_for('upload', dataType='users')}}">
-                <button class="pill-button">Update Values</button>
-            </a>
-    </div>
-    <div class="col-md-3 col-6">
-
-            <a href="{{url_for('getallusers')}}" style="text-decoration: none; color: black;">
-                <div data-aos="fade-up" class="card">
-                    <h6>All Users</h6>
-                    <h2 style="font-weight: 700;">{{activeUsers}}</h2>
-                    <!-- <h6 class="text-muted">{{successfulTransaction}} Transactions</h6> -->
-                </div>
-
-               
-            </a>
-        </div> 
-
+        
+        
+    </div>   
+    
+    
     
     <div class="col-md-3 col-6">
-        <a class="link" >
+        <a href="#">
             <div data-aos="fade-up" data-aos-delay="100" class="card">
-                <h6>Occupancy Rate</h6>
-                <h2 style="font-weight: 700;">Ghc{{todaysBalance}}</h2>
-            </div>
-        </a>
-    </div>
-
-   
-
-    <div class="col-md-3 col-6">
-        <a class="link" >
-            <div data-aos="fade-up" data-aos-delay="100" class="card">
-                <h6>All Transactions</h6>
-                <h2 style="font-weight: 700;">{{totalTransasactions}}</h2>
+                <h6>Transactions</h6>
+                <h2 style="font-weight: 700;">{{transactions}}</h2>
                 <h6><u>View all</u></h6>
             </div>
         </a>
     </div>
 
-   
-
+</div>
 </div>
 
+<div class="info-block">
+    <h4>Analytics</h4>
+    <br>
+    <div data-aos="fade-up"  data-aos-delay="300"  class="card" style="padding: 10;">
 
+    <canvas id="myChart" style="width:100%; max-width:600px"></canvas>
+
+    </div>
+    </div>
+
+<div>
+    <h4>Quick Actions</h4>
+    <br>
+    <div class="row">
+        <div class="col-md-3">
+            <div data-aos="fade-up"  data-aos-delay="400"  class="card">
+                <h6>Broadcast message</h6>
+                <!-- <h1 style="font-weight: 700;">Withdraw</h1> -->
+                <h6>
+                    <a href="{{url_for('broadcast')}}">
+                        <button class="pill-button">Create Message</button>
+                    </a>
+
+            </h6>
+
+
+            </div>
+        </div>
+    
+        <div class="col-md-3">
+            <div data-aos="fade-up"  data-aos-delay="500"  class="card">
+                <h6>Hide Votes</h6>
+                <!-- <h1 style   ="font-weight: 700;">2</h1> -->
+                <h6>
+                
+                    <a href="#">
+                        <button class="pill-button" onclick="showModal()">DarkMode</button>
+                    </a>
+
+            </h6>
+            </div>
+        </div>
+    
+
+        <div class="col-md-3">
+            <div data-aos="fade-up"  data-aos-delay="600"  class="card">
+                <h6>Update Election State</h6>
+                <h6>
+                    <a href="#">
+                        <button class="pill-button">Update State</button>
+                    </a>
+
+                </h6>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div data-aos="fade-up"  data-aos-delay="600"  class="card">
+                <h6>Log out of your account</h6>
+                <h6>
+                    <a href="{{url_for('logout')}}">
+                        <button class="pill-button" style="background-color: red;">Logout!</button>
+                    </a>
+                </h6>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- <div id="dataObject">{{dataArray}}</div> -->
+</div>
+
+<script>
+    function showModal(params) {
+        console.log("MODAL IS SHOWING!")
+    }
+</script>
+
+
+<script>
+    // yValueData = document.getElementById("dataObject").innerText.split(",")
+    // var xValues = ["Mon","Tue","Wed","Thur","Fri","Sat","Sun"];
+    var xValues = {{dates|safe}}
+    var yValues = {{amount|safe}}
+    var maxValue = {{maxAmount|safe}}
+    var minValue = {{minAmount|safe}}
+    
+    new Chart("myChart", {
+      type: "line",
+      data: {
+        labels: xValues,
+        datasets: [{
+          fill: false,
+          lineTension: 0,
+          backgroundColor: "rgba(0,0,255,1.0)",
+          borderColor: "blue",
+          borderWidth:7,
+          data: yValues
+        }]
+      },
+      options: {
+        legend: {display: false},
+        responsive:true,
+        scales: {
+          yAxes: [{ticks: {min:0, max: maxValue }}],
+        },
+      }
+    });
+    </script>
+
+
+<!-- <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+
+google.charts.load('current', {packages: ['corechart', 'line']});
+google.charts.setOnLoadCallback(drawCurveTypes);
+
+function drawCurveTypes() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('number', 'X');
+    data.addColumn('number', 'Web');
+    data.addColumn('number', 'Ussd');
+
+    dataArray = 
+
+    data.addRows([
+      [0, 0, 0],    [1, 10, 5],   [2, 23, 15],  [3, 17, 9],   [4, 18, 10],  [5, 9, 5],
+      [6, 11, 3],   [7, 27, 19]
+    ]);
+
+    var options = {
+      hAxis: {
+        title: 'Days'
+      },
+      vAxis: {
+        title: 'Amount'
+      },
+      series: {
+        1: {curveType: 'function'}
+      }
+    };
+
+    var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+    chart.draw(data, options);
+  }
+</script> -->
 
 
 
