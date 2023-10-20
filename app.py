@@ -1201,6 +1201,8 @@ def pay(userId):
 
     if len(choices) > 0:
         form.transactionType.choices = [transactionType.name for transactionType in choices]
+    else:
+        form.transactionType.data = 'Default'
     if request.method == 'POST':
         if form.validate_on_submit():
             body={
@@ -1234,7 +1236,7 @@ def pay(userId):
             #     return redirect(url_for('transaction', transactionId=transaction.id))
 
         else:
-            print(form.errors)
+            print(form.errors)    
     return render_template('confirmUser.html', user=user, listing=listing, form=form)
 
 @app.route('/logout', methods=['GET', 'POST'])
