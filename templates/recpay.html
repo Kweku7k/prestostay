@@ -31,7 +31,7 @@
 
                 <div class="inputTextHolder">
                     <h6>{{form.phone.label}}</h6>
-                    {{form.phone (class="inputTextCard", placeholder="02XXXXXXXX")}}
+                    {{form.phone (class="inputTextCard", placeholder="0XXXXXXXXX")}}
                     {% for error in form.phone.errors %}
                     <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                     {% endfor %}
@@ -42,7 +42,7 @@
                 
 
 
-                <a href='{{url_for("register")}}'>
+                <a href='{{url_for("index")}}'>
                     <h6 style="text-align: center; margin-top: 2vh; text-decoration: underline;">
                             I want to create an account.
                         </h6>

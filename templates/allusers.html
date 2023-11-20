@@ -5,30 +5,87 @@
 <div class="container">
     <br/>
 
-    <h4>All Your Users</h4>
-    <h6 class="text-muted">Total Number?</h6>
+    <div> 
+        <div class="me-2">
+            <h4>All Tenants</h4>
+            <h6 class="text-muted">{{listing.name}}</h6>
+        </div>
+        <form class="d-flex">
+            <input class="form-control me-2" style="border-radius: 10px;" type="search" placeholder="Search" aria-label="Search">
+            <button class="pill-button" type="submit">Search</button>
+          </form>
+    </div>
+    <!-- Scale -->
+    <br/>
+<div style="display: flex; justify-content: space-around; align-items: center;">
+
+    <a href="{{url_for('getallusers', status='full')}}">
+
+            {% if status == "full" %}
+            <div style="display: flex;"  class="selected" >
+            {% else %}
+            <div style="display: flex;" >
+            {% endif %}
+
+            <div style="width: 10px; height: 10px; background-color: green; border-radius: 50%; margin: auto; margin-right: 10px;"></div>
+            <h6>Paid In Full</h6>
+        </div>
+    </a>
+        
+    <a href="{{url_for('getallusers', status='min')}}">
+        {% if status == "min" %}
+        <div style="display: flex;"   class="selected" >
+        {% else %}
+        <div style="display: flex;" >
+        {% endif %}
+            <div style="width: 10px; height: 10px; background-color: rgb(255, 170, 0); border-radius: 50%; margin: auto; margin-right: 10px;"></div>
+            <h6>Above Minimum</h6>
+        </div>
+    </a>
+
+    <a href="{{url_for('getallusers', status='debt')}}">
+
+        {% if status == "debt" %}
+        <div style="display: flex;"   class="selected" >
+        {% else %}
+        <div style="display: flex;" >
+        {% endif %}
+            <div style="width: 10px; height: 10px; background-color: red; border-radius: 50%; margin: auto; margin-right: 10px;"></div>
+            <h6>Below Minimum</h6>
+        </div>
+    </a>
+
+    <a href="{{url_for('getallusers', status='grad')}}">
+        {% if status == "grad" %}
+        <div style="display: flex;"   class="selected" >
+        {% else %}
+        <div style="display: flex;" >
+        {% endif %}
+            <div style="width: 10px; height: 10px; background-color: purple; border-radius: 50%; margin: auto; margin-right: 10px;"></div>
+            <h6>Cleared For Graduation </h6>
+        </div>
+    </a>
+    <a href="{{url_for('getallusers')}}">
+        <box-icon  name='x'></box-icon>
+    </a>
+
+
+</div>
+
 
     <br/>
     {% for user in users %}
     <a href="{{url_for('profile',id=user.id )}}">
         <div class="card row" style=" display: flex; justify-content: space-between; padding: 20px; flex-direction: row;">
+
             <div style="width:fit-content; ">
-                <h6 style="width: fit-content;">{{user.id}} . {{user.username}} - Ghc{{user.paid}} </h6>
-                {% if user.balance > 0 %}
-                <h6 style="color: red;">GHC{{user.balance}}</h6>
-                
-                {% endif %}
+                <h6 style="width: fit-content;">{{user.id}} . {{user.username}}</h6>
+                <h6 style="width: fit-content;" class="text-muted">{{user.roomNumber}} - GHC{{user.fullAmount}} </h6>
             </div>
 
-            <div style="width:fit-content; display: flex; align-items: center; ">
-                {% if user.status == '1' %}
-                <div class="statusEllipse-success"></div>
-                {% elif user.status == '2' or user.status == '3' %}
-                <div class="statusEllipse-failed"></div>
-                {% elif user.status == '4' %}
-                <div class="statusEllipse-pending"></div>
-                {% endif %}
-                Delete
+            <div style="width:fit-content; align-items: center;">
+                <h6 style="color: green;">GHS {{user.paid}}</h6>
+                <h6 style="color: rgba(255, 0, 0, 0.539);" >GHS {{user.balance}}</h6>
             </div>
         </div>
     </a>

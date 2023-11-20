@@ -1,0 +1,38 @@
+{% extends "prontoform/prontoformlayout.html" %}
+
+{% block body %}
+
+<form action="" method="post">
+    {{form.hidden_tag()}}
+
+    <div class="inputTextHolder">
+        <h6>{{form.name.label}}</h6>
+        {{form.name (class="inputTextCard", placeholder="Enter the recipient name")}}
+        {% for error in form.name.errors %}
+        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+        {% endfor %}
+    </div>
+
+    <div class="inputTextHolder">
+        <h6>{{form.number.label}}</h6>
+        {{form.number (class="inputTextCard", placeholder="Enter the recipient number")}}
+        {% for error in form.number.errors %}
+        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+        {% endfor %}
+    </div>
+
+    <div class="inputTextHolder">
+        <h6>{{form.relationship.label}}</h6>
+        {{form.relationship (class="inputTextCard", placeholder="Enter the recipient relationship")}}
+        {% for error in form.relationship.errors %}
+        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+        {% endfor %}
+    </div>
+
+
+        <br/>
+        {{form.submit(class='pill-button full')}}
+
+</form>
+
+{% endblock %}

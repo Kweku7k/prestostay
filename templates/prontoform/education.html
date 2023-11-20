@@ -1,0 +1,38 @@
+{% extends "prontoform/prontoformlayout.html" %}
+
+{% block body %}
+
+<form action="" method="post">
+    {{form.hidden_tag()}}
+
+    <div class="inputTextHolder">
+        <h6>{{form.studentId.label}}</h6>
+        {{form.studentId (class="inputTextCard", placeholder="Enter the recipient name")}}
+        {% for error in form.studentId.errors %}
+        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+        {% endfor %}
+    </div>
+
+    <div class="inputTextHolder">
+        <h6>{{form.course.label}}</h6>
+        {{form.course (class="inputTextCard", placeholder="Enter the recipient course")}}
+        {% for error in form.course.errors %}
+        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+        {% endfor %}
+    </div>
+
+    <div class="inputTextHolder">
+        <h6>{{form.level.label}}</h6>
+        {{form.level (class="inputTextCard", placeholder="Enter the recipient level")}}
+        {% for error in form.level.errors %}
+        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+        {% endfor %}
+    </div>
+
+
+        <br/>
+        {{form.submit(class='pill-button full')}}
+
+</form>
+
+{% endblock %}

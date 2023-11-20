@@ -1,0 +1,56 @@
+{% extends "prontoform/prontoformlayout.html" %}
+
+{% block body %}
+
+<form action="" method="post">
+    {{form.hidden_tag()}}
+
+    <div class="inputTextHolder">
+        <h6>{{form.firstname.label}}</h6>
+        {{form.firstname (class="inputTextCard", placeholder="Enter the recipient name")}}
+        {% for error in form.firstname.errors %}
+        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+        {% endfor %}
+    </div>
+
+    <div class="inputTextHolder">
+        <h6>{{form.middlename.label}}</h6>
+        {{form.middlename (class="inputTextCard", placeholder="Enter the recipient middlename")}}
+        {% for error in form.middlename.errors %}
+        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+        {% endfor %}
+    </div>
+
+    <div class="inputTextHolder">
+        <h6>{{form.surname.label}}</h6>
+        {{form.surname (class="inputTextCard", placeholder="Enter the recipient surname")}}
+        {% for error in form.surname.errors %}
+        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+        {% endfor %}
+    </div>
+
+
+    <div class="inputTextHolder">
+        <h6>{{form.personalPhoneNumber.label}}</h6>
+        {{form.personalPhoneNumber (class="inputTextCard", placeholder="Enter the recipient personalPhoneNumber")}}
+        {% for error in form.personalPhoneNumber.errors %}
+        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+        {% endfor %}
+    </div>
+
+
+
+    <div class="inputTextHolder">
+        <h6>{{form.checkInDate.label}}</h6>
+        {{form.checkInDate (class="inputTextCard", placeholder="Enter the recipient checkInDate")}}
+        {% for error in form.checkInDate.errors %}
+        <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+        {% endfor %}
+    </div>
+
+        <br/>
+        {{form.submit(class='pill-button full')}}
+
+</form>
+
+{% endblock %}
