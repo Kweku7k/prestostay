@@ -49,6 +49,9 @@ a{
     transition: width 2s;
 }
 
+.full{
+    width: 100%;
+}
 
 .pill-option-alternate{   
     background-color: white;
@@ -226,6 +229,30 @@ margin-bottom: 3vh;
     border: none; 
     width: 100px;
     margin: auto; 
+    object-fit: cover;
+}
+.selected{
+    background-color: rgba(0, 0, 255, 0.615);
+    padding: 3px 10px;
+    display: flex;
+    align-items: center;
+    border-radius: 20px;
+    color: white;
+}
+
+.profileellipse{
+    background-color: rgb(48, 44, 255); 
+    border-radius:rgb(48, 44, 255);
+    background-color: #080685;
+    /* justify-content: space-around;  */
+    align-items: cåenter; 
+    border-radius: 50%; 
+    overflow: hidden; 
+    display: flex; 
+    height: 100px;
+    border: none; 
+    width: 100px;
+    /* margin: 0;  */
     object-fit: cover;
 }
 
@@ -426,18 +453,18 @@ margin-bottom: 3vh;
 .progress-bar {
     width: 300px;
     height: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid #f4eded;
     border-radius: 5px;
     background-color: blue;
     overflow: hidden;
     border-radius: 20px;
-
 }
 
 .progress {
     height: 100%;
-    background-color: rgb(224, 224, 224);
+    background-color: rgb(236, 236, 236);
     border-radius: 20px;
+    margin: 20px auto;
 }
 
   

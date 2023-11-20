@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+
+<div class="container">
+    <div class="row" style="justify-content: space-around; margin-top: 1vh;">
+        
+        <div class="col-md-6">
+            <h1 class="heading" style="text-align: center; margin-top: 2vh;">Hi {{user.username}}</h1>
+            <div class="defaultCard">
+                <h4 style="text-align: center; width: 100%; ">CU Female Halls Annex Room Reservation Form</h4>   
+
+                <!-- <div class="progress">
+                    <div class="progress-bar " role="progressbar" style="width: 25%;"
+                        aria-valuenow="25" aria-valuemin="0" aria-valuemax="100" >
+                    </div>
+                </div> -->
+                <div>
+                    <p style="text-align: center; width: 100%; ">Thank you for choosing to stay with us! Please take a moment to complete this form with your information to help us allocate a room that suits your preferences.
+                        <br/>
+                        <br/>
+
+                        Please be aware that this form is the initial step in the reservation process. Following the form submission, we require that you make a minimum payment of 75% of the total amount due within 48 hours to confirm your reservation.
+                        <br/>
+                        <br/>
+                        If payment is not received within this 48-hour period, your reservation will be canceled, and you'll need to resubmit the form to make a new reservation.
+                        <br/>
+                        <br/>
+                        We appreciate your cooperation and look forward to hosting you!</p>   
+    
+                        <a href="{{url_for('prontoformPersonal')}}">
+                            <button class="pill-button full">Proceed</button>
+                        </a>
+
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+    

@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, FloatField,SubmitField, BooleanField, SelectField, IntegerField, RadioField
+from wtforms import EmailField, StringField, PasswordField, DateField, FloatField,SubmitField, BooleanField, SelectField, IntegerField, RadioField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError
 from wtforms.widgets import TextArea
 
@@ -8,6 +8,10 @@ class FindUser(FlaskForm):
     phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
     submit = SubmitField('Proceed')
 
+class BroadcastForm(FlaskForm):
+    group = SelectField('Group', choices=[('All Tenants'),('Debtors')])
+    message = StringField('Message',widget=TextArea(), validators=[DataRequired()])
+    submit = SubmitField('Broadcast')
 
 class FindRecUser(FlaskForm):
     organisation = SelectField('Organisation', choices=[('CU Female Annex', 'CU Female Annex')]) #Api call for all rooms
@@ -24,10 +28,29 @@ class SelectSubListingForm(FlaskForm):
     location = SelectField('Location', choices=['All Floors'])
     bedsAvailable = SelectField('Beds Available', choices=['All Beds'])
     size = SelectField('Size', choices=['All Sizes'])
-    # price = SelectField('Beds', choices=['All Room Types'])
-    # occupancy = SelectField('Region', choices=['Greater Accra','Greater Accra'])
-
     submit = SubmitField('Search')
+
+
+class ProntoProfileFormPersonalInformation(FlaskForm):
+    firstname = StringField('First Name')
+    middlename = StringField('Middle Name(s)')
+    surname = StringField('Surname')
+    personalPhoneNumber = StringField('Personal Phone Number')
+    checkInDate = DateField('When do you intend to check in')
+    submit = SubmitField('Next')
+
+class ProntoProfileFormEducationInformation(FlaskForm):
+    studentId = StringField('Student Id')
+    course = SelectField('Course', choices=['Default'])
+    level = SelectField('Level', choices=[level for level in range(100, 700, 100)]+['ATHE', 'Diploma'])
+    submit = SubmitField('Next')
+    
+
+class ProntoProfileFormEmergencyInformation(FlaskForm):
+    name = StringField('Name Of Emergency Contact')
+    number = StringField('Phone Number')
+    relationship = SelectField('Relationship To Emergency Contact', choices=['Daddy'])
+    submit = SubmitField('Done')
 
 
 class PaymentForm(FlaskForm):
@@ -35,14 +58,16 @@ class PaymentForm(FlaskForm):
     amount = StringField('Transaction Amount', validators=[DataRequired()])
     indexNumber = StringField('Index Number')
     transactionType = SelectField('Transaction Type', choices=['Default'])
-    # account = StringField('Phone', validators=[Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
     note = StringField('Leave A Note.')
     submit = SubmitField('Proceed')
 
 class ListingForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
-    description = StringField('Description', validators=[DataRequired()])
-    # location = StringField('Location', validators=[DataRequired()])
+    email = EmailField('Name', validators=[DataRequired()])
+    # password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
+    # confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password', message='Your passwords dont match, please try again')])
+    
+    description = StringField('Description')
     location = SelectField('Region', choices=['Greater Accra','Greater Accra'])
     locationTag = StringField('LocationTag')
     images = StringField('Images')
@@ -52,7 +77,7 @@ class ListingForm(FlaskForm):
 class SubListingForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     price = FloatField('Price', validators=[DataRequired()])
-    description = StringField('Description', validators=[DataRequired()])
+    description = StringField('Description')
     quantity = IntegerField('Quantity')
     submit = SubmitField('Create')
 
@@ -64,7 +89,7 @@ class ProfileForm(FlaskForm):
     username = StringField('Name', validators=[DataRequired()])
     phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
     email = StringField('Email', validators=[DataRequired()])
-    indexNumber = StringField('Index Number', validators=[DataRequired()])
+    indexNumber = StringField('Index Number')
     listing = StringField('Listing', validators=[DataRequired()])
 
     balance = FloatField('Balance')

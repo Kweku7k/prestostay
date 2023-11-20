@@ -42,9 +42,6 @@
                     {% endif %}
                     <!-- <div class="flexBar"><h6>Last Payment</h6><h6 class="text-muted">{{user.lastpayment}}</h6></div> -->
                     <hr>
-                
-
-                
                         <form action="" method="post">
                             {{form.hidden_tag()}}
 
@@ -65,8 +62,10 @@
                                 <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                                 {% endfor %}
                             </div>
-                            {% if user.balance > 0 %}
+                            {% if user.balance %}
+                                {% if user.balance  > 0 %}
                                 <h6 style="color: grey; font-weight: 700; margin-top: 1vh;">Outstanding Balance: GHS {{user.balance}}</h6>
+                                {% endif %}
                             {% endif %}
 
                             {{form.submit(class="pill-button", style="width: 100%; margin-top:5vh;")}}

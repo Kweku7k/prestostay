@@ -1,3 +1,4 @@
+import os
 import urllib.request, urllib.parse
 import urllib
 import time
@@ -158,3 +159,24 @@ def send_sms(phone,message):
 #     # app.logger.info(callbackUrl)
 
 #     return responseBody
+
+
+def create_folder(folder_path):
+    print(f"Checkign to see if the {folder_path} exists")
+    # Check if the folder already exists
+    if not os.path.exists(folder_path):
+        # Create the folder if it doesn't exist
+        os.makedirs(folder_path)
+        print(f"Folder '{folder_path}' created successfully.")
+    else:
+        print(f"Folder '{folder_path}' already exists.")
+    
+    print(f'Folder Path:{folder_path}')
+    return folder_path
+
+def logger(message, flash=False):
+    print(message)
+    if flash == True:
+        flash(message)
+    # send telegram as log.
+    # add to db as entry

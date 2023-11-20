@@ -1,15 +1,18 @@
 import csv
 import datetime
+from datetime import timedelta
 import json
 import os
-from flask import Flask, flash, jsonify,redirect,url_for,render_template, request
-from flask_login import login_user, logout_user, current_user, LoginManager
+import random
+from flask import Flask, flash, jsonify,redirect, session,url_for,render_template, request
+from flask_login import UserMixin, login_user, logout_user, current_user, LoginManager, login_required
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Enum, func
 from itsdangerous import Serializer
 from flask_bcrypt import Bcrypt
-from utils import apiResponse, send_sms, sendTelegram, sendVendorTelegram, reportTelegram  
+from dataprocessing import convertToNumber, createRooms, getOccupants
+from utils import apiResponse, create_folder, send_sms, sendTelegram, sendVendorTelegram, reportTelegram  
 from forms import *
 import pprint
 import time
@@ -18,22 +21,19 @@ import geocoder
 from urllib.parse import quote as url_quote
 
 
-
 app=Flask(__name__)
 bcrypt = Bcrypt(app)
-sandboxDb = "postgresql://postgres:adumatta@database-1.crebgu8kjb7o.eu-north-1.rds.amazonaws.com:5432/stay"
+sandboxDb = "postgresql://postgres:adumatta@database-1.crebgu8kjb7o.eu-north-1.rds.amazonaws.com:5432/staysandbox"
 app.config['SECRET_KEY'] = 'c280ba2428b2157916b13s5e0c676dfde'
 app.config['SQLALCHEMY_DATABASE_URI']= sandboxDb
 
-
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "users.login"
+login_manager.login_view = "login"
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 mapsApiKey = os.environ.get('GOOGLEMAPSAPIKEY')
-
 
 prestoUrl = "https://prestoghana.com"
 baseUrl = "https://stay.prestoghana.com"
@@ -79,6 +79,19 @@ class TransactionType(db.Model):
     def __repr__(self):
         return f"TransactionType('id: {self.id}', 'name:{self.name}', 'superListing:{self.superListing}')"
     
+class EmergencyContacts(db.Model):
+    tablename=['EmergencyContacts']
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    relationship = db.Column(db.String)
+    userId = db.Column(db.String)
+    username = db.Column(db.String)
+    phoneNumber = db.Column(db.String)
+
+    def __repr__(self):
+        return f"EmergencyContact('id: {self.id}', 'name:{self.name}', 'user:{self.username}')"
+    
 
 class Listing(db.Model):
     tablename = ['Listing']
@@ -86,6 +99,7 @@ class Listing(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     email = db.Column(db.String)
+    # password = db.Column(db.String(), primary_key=False, unique=False, nullable=False)
     phone = db.Column(db.String)
     chatId = db.Column(db.String)
     logo = db.Column(db.String)
@@ -147,11 +161,18 @@ class LocationTagEnum(Enum):
     on_campus = 'on_campus'
     off_campus = 'off_campus'
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     """Model for user accounts."""
     __tablename__ = 'users'
 
     name = db.Column(db.String)
+
+    firstname = db.Column(db.String)
+    middlename = db.Column(db.String)
+    surname = db.Column(db.String)
+    joined = db.Column(db.DateTime, default=datetime.datetime.utcnow())
+    checkin = db.Column(db.DateTime)
+
     phone = db.Column(db.String)
     role = db.Column(db.String, default="user")
     indexNumber = db.Column(db.String)
@@ -172,10 +193,12 @@ class User(db.Model):
     availablebalance = db.Column(db.Float, default=0)
     percentage = db.Column(db.Float, default=0)
     role = db.Column(db.String, default="user")
+    course = db.Column(db.String)
+    level = db.Column(db.String)
     id = db.Column(db.Integer,primary_key=True)
     dailyDisbursal = db.Column(db.Boolean, default=False)
     username = db.Column(db.String,nullable=False,unique=False)
-    email = db.Column(db.String(), unique=True, nullable=False)
+    email = db.Column(db.String())
     password = db.Column(db.String(), primary_key=False, unique=False, nullable=False)
 
     def get_reset_token(self, expires_sec=1800):
@@ -245,7 +268,6 @@ class LedgerEntry(db.Model):
     def __repr__(self):
         return f"Payment Ghc('{self.amount}', ' - {self.userId}')"
 
-
 # ------ FUNCTIONS
 
 def reportError(e):
@@ -253,8 +275,12 @@ def reportError(e):
     pass
 
 def getListing(id):
+    print(id)
     try:
-        listing = Listing.query.get_or_404(id)
+        if type(id) == int:
+            listing = Listing.query.get_or_404(id)
+        else:
+            listing = Listing.query.filter_by(slug=id).first()
     except Exception as e:
         print(e)
         print("Couldnt find a listing with this id.")
@@ -270,15 +296,14 @@ def getAllListings(suggestion=None):
 
 def createListing(body):
     print(body)
-    # pprint.pprint(body.json())
-    # body = jsonify(body.data)
     new_listing = Listing(
         name=body.get("name"),
         description=body.get("description"),
         location=body.get("location", "Greater Accra"),
-        locationTag=body.get("locationTag", "Accra")
+        locationTag=body.get("locationTag", "Accra"),
+        email = body.get("email"),
+        password = body.get("password"),
         )
-
     try:
         db.session.add(new_listing)
         db.session.commit()
@@ -394,6 +419,15 @@ def deleteListing(id):
        message = "There was a problem deleting this data"
        data = listing
     return apiResponse(code, message, data, startTime)
+
+def stay_user():
+    userId = session.get('stay_user_id', None)
+    if userId == None:
+        flash(f'There is no account signed it at the moment. Please authenticate to continue')
+        return redirect(url_for('findme'))
+    else: 
+        return User.query.get_or_404(userId)
+
 
 def getkeys(json_body):
     # Parse the JSON data into a Python dictionary
@@ -652,12 +686,14 @@ def uploadTransactions(filename):
             
     return message
 
-def uploadData(filename):
+def uploadData(filename, format=False):
     csv_file_path = filename  # Replace with the path to your CSV file
     message = "New Users updated successfully!"
 
-    for u in User.query.all():
-        db.session.delete(u)
+
+    if format == True and os.environ.get("SERVER") == "LOCAL":
+        for u in User.query.all():
+            db.session.delete(u)
 
     with open(csv_file_path, 'r', newline='') as csvfile:
         csv_reader = csv.DictReader(csvfile)
@@ -665,27 +701,29 @@ def uploadData(filename):
         for row in csv_reader:
             print(row)
 
-            try:
-                user = User(username = row["Name"], password = "0000",email = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+row["Number"]+"@prestoghana.com", phone = row["Number"], indexNumber=row["Index Number"], listing=row["Listing"], paid=row["Paid"], roomNumber=row["Room Number"], fullAmount=row["Full Amount"], balance=row["Balance"], listingSlug=row["listingSlug"] )
-                db.session.add(user)
-            except Exception as e:
-                message = "There seems to have been an issue with the upload"
-                print(e)
+            if row.get('Number'):
 
-            db.session.commit()
-            
+                try:
+                    emailThingy = random.sample(range(1, 7000 + 1), 1)[0]
+                    user = User(username = row["Name"], password = "0000",email = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+str(emailThingy)+"@prestoghana.com", phone = row["Number"], indexNumber=row["Index Number"], listing=row["Listing"], paid=convertToNumber(row["Paid"]), roomNumber=row["Room Number"], fullAmount=convertToNumber(row["Full Amount"]), balance=convertToNumber(row["Balance"]), listingSlug=row["listingSlug"] )
+                    db.session.add(user)
+                except Exception as e:
+                    message = "There seems to have been an issue with the upload"
+                    print(e)
+
+                db.session.commit()
+                    
     return message
 
-def uploadRoomData(filename, listing):
+def uploadRoomData(filename, listing, format=False):
     csv_file_path = filename  # Replace with the path to your CSV file
     message = "New Rooms updated successfully!"
 
+    if format == True:
+        for u in SubListing.query.all():
+            db.session.delete(u)
+
     print("Attempting Create New Sublistings for " + listing.name)
-
-    # for u in SubListing.query.filter_by(listingS):
-    #     db.session.delete(u)
-
-    # create a new sublisting
 
     with open(csv_file_path, 'r', newline='') as csvfile:
         csv_reader = csv.DictReader(csvfile)
@@ -694,13 +732,13 @@ def uploadRoomData(filename, listing):
             print(row)
 
             try:
-                # user = User(username = row["Name"], password = "0000",email = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+row["Number"]+"@prestoghana.com", phone = row["Number"], indexNumber=row["Index Number"], listing=row["Listing"], paid=row["Paid"], roomNumber=row["Room Number"], fullAmount=row["Full Amount"], balance=row["Balance"], listingSlug=row["listingSlug"] )
-                sublisting = SubListing(name = row["Name"], block=row["Block"], roomId=row["RoomId"], bedsAvailable=row["Beds Available"], bedsTaken = row["Beds Taken"], location = row["Location"], size=row["Size"], status = row["Vacancy Status"], pricePerBed=row["Price per bed"], price=row["Price"], listingId=row["Listing Id"], superListing=row["Super Lisiting"] )
+                sublisting = SubListing(name = row["Name"], block=row["Block"], roomId=row["RoomId"], bedsAvailable=row["Beds Available"], bedsTaken = row["Beds Taken"], location = row["Location"], size=row["Size"], status = row["Vacancy Status"], pricePerBed=row["Price per bed"], price=row["Price"], listingId=row["Listing Id"], superListing=row["Super Listing"] )
                 db.session.add(sublisting)
 
             except Exception as e:
                 message = "There seems to have been an issue with the upload"
-                print(e)
+                errormessage = e
+                print(errormessage)
 
             db.session.commit()
             
@@ -858,9 +896,6 @@ def autocomplete():
 def newlisting():
     form = ListingForm()
 
-
-    # form.location.choices = cities
-
     if form.validate_on_submit():
         newListing = createListing(form.data)
         pprint.pprint(newListing)
@@ -919,17 +954,30 @@ def editsublisting(sublisting):
             form.quantity.data = sublisting.quantity
             form.description.data = sublisting.description
 
-
         return render_template('newsublisting.html', form=form, current_user=None, listing=listing)
     else:
         return render_template('404.html', message="There was no listing with this Id.")
 
 
 @app.route('/allusers', methods=['GET', 'POST'])
-# @login_required
-def getallusers():
-    users = User.query.filter_by(listingSlug = 'mmogcc').all()
-    return render_template('allusers.html', users=users)
+@app.route('/allusers/<string:status>', methods=['GET', 'POST'])
+@login_required
+def getallusers(status="all"):
+    print(current_user)
+    listing = getListing(current_user.listing)
+    minimum = 700
+
+    if status == "debt":
+        users = User.query.filter(User.listingSlug == listing.slug, User.paid <= minimum).all()
+    elif status == "full":
+        users = User.query.filter(User.listingSlug == listing.slug, User.paid >= User.fullAmount).all()
+    elif status == "min":
+        users = User.query.filter(User.listingSlug == listing.slug, User.paid >= minimum ).all()
+    elif status == "grad":
+        users = User.query.filter(User.listingSlug == listing.slug, User.paid <= minimum).all()
+    else:
+        users = User.query.filter_by(listingSlug=listing.slug).all()
+    return render_template('allusers.html', users=users, listing=listing, status=status)
 
 @app.route('/onboard', methods=(['POST','GET']))
 def onboard():
@@ -940,7 +988,6 @@ def onboard():
         print ("You have been logged out")
     if form.validate_on_submit():
         print(form.data)
-        # check email
         if User.query.filter_by(email = form.email.data).first() != None:
             print("user")
             flash(f'There is already a user with this email address')
@@ -973,14 +1020,16 @@ def onboard():
 
             user = User.query.filter_by(email=form.email.data).first()
 
+            # return redirect(url_for('prontoform', userId=user.id))
             return redirect(url_for('sublisting', userId=user.id))
+
     else:
         print(form.errors)
     return render_template('onboard.html', form=form, title="Onboard New User")
 
 
 @app.route('/register/<string:organisationslug>', methods=(['POST','GET']))
-@app.route('/register', methods=(['POST','GET']))
+# @app.route('/register', methods=(['POST','GET']))
 def register(organisationslug = None):
     form = RegisterForm()
     organisation = None
@@ -1027,6 +1076,7 @@ def register(organisationslug = None):
                     db.session.commit()
                     send_sms(newuser.phone, "You have been successfully onboarded to "+organisation.name+". \nhttps://stay.prestoghana.com/recpay" + str(newuser.id) +  " \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
                     sendTelegram(newuser.phone, newuser.username +" : " + newuser.phone + "has onboarded to PrestoPay. \nhttps://stay.prestoghana.com/profile/ \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
+                    session['stay_user_id'] = newuser.id
                     return redirect(url_for('sublisting', userId=newuser.id))
                 except Exception as e:
                     print(e)
@@ -1106,13 +1156,13 @@ def findme():
 
         user = User.query.filter(User.phone.endswith(phoneNumber)).first()
         
-        
         print(user)
         if user is None:
             flash(f'We couldnt find anyone with this phone number.')
             return redirect(url_for('findme'))
-        
-        return redirect(url_for('pay', userId=user.id))
+        else:
+            session['stay_user_id'] = user.id
+            return redirect(url_for('pay', userId=user.id))
         # return render_template('confirmUser.html', user=user, form=form)
     return render_template('pay.html', current_user=None, form=form)
 
@@ -1194,6 +1244,8 @@ def recpay(organisationSlug = None):
 
 @app.route('/pay/<int:userId>', methods=['GET','POST'])
 def pay(userId):
+    print("current_user")
+    # print(current_user.username)
     user = User.query.get_or_404(userId)
     form = PaymentForm()
     listing = Listing.query.filter_by(slug=user.listingSlug).first()
@@ -1241,11 +1293,37 @@ def pay(userId):
 
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
-    pass
+    flash("You have been successfully logged out")
+    logout_user()
+    return redirect(url_for('login'))
 
-@app.route('/broadcast', methods=['GET', 'POST'])
+@app.route("/broadcast", methods=['GET','POST'])
+# @login_required
 def broadcast():
-    pass
+    listing = Listing.query.get_or_404(1)
+    form = BroadcastForm()
+
+    contacts = User.query.filter_by(listingSlug=listing.slug).all()
+    numberOfContacts = User.query.filter_by(listingSlug=listing.slug).count()
+    
+    app.logger.info(session)
+
+    loadingMessage = "Broadcasting message to " + str(numberOfContacts) + " contacts, this might take a while😭"
+    if request.method == 'POST':
+        app.logger.info(session)
+        app.logger.info("form.csrf_token.data")
+        app.logger.info(form.csrf_token.data)
+        message = form.message.data
+        message += "\n \nPowered By PrestoGhana"
+        app.logger.info(message)
+        # app.logger.info(contacts)
+        # for contact in contacts:
+        #     send_sms(contact, message, "PrestoVotes")
+        flash(str(numberOfContacts) + ' messages to ' + form.group.data + 'has not been approved.')
+        return redirect(url_for('dashboard'))
+
+    return render_template('broadcast.html',  contacts=contacts, numberOfContacts=numberOfContacts, form=form, loadingMessage=loadingMessage, listing=listing)
+
 
 @app.route('/subSlugs/<string:listingSlug>', methods=['GET', 'POST'])
 def createSubListingSlugs(listingSlug):
@@ -1312,6 +1390,62 @@ def updateRoomCount(superListing):
         print(i.vacant)
     db.session.commit()
     return 'Done'
+
+
+@app.route('/prontoform', methods=['GET', 'POST'])
+def prontoform():
+    user =  stay_user()
+    return render_template('prontoform/prontoform.html',user=user)
+
+@app.route('/prontoform/personal', methods=['GET', 'POST'])
+def prontoformPersonal():
+    form = ProntoProfileFormPersonalInformation()
+    if form.validate_on_submit():
+        userId = session['stay_user_id']
+        user = User.query.get_or_404(userId)
+        try:
+            user.firstname = form.firstname.data
+            user.middlename = form.middlename.data
+            user.surname = form.surname.data
+            db.session.commit()
+            return redirect(url_for('prontoformEduction'))
+        except Exception as e:
+            reportError(e)
+    return render_template('prontoform/personalInformation.html', progress=30, form=form)
+
+@app.route('/prontoform/eductionInformation', methods=['GET', 'POST'])
+def prontoformEduction():
+    form = ProntoProfileFormEducationInformation()
+    if form.validate_on_submit():
+        userId = session['stay_user_id']
+        user = User.query.get_or_404(userId)
+        try:
+            user.level = form.level.data
+            user.course = form.course.data
+            user.indexNumber = form.studentId.data
+            db.session.commit()
+        except Exception as e:
+            reportError(e)
+        return redirect(url_for('prontoformEmergency'))
+    return render_template('prontoform/education.html', progress=60, form=form)
+
+@app.route('/prontoform/emergency', methods=['GET', 'POST'])
+def prontoformEmergency():
+    form = ProntoProfileFormEmergencyInformation()
+    if form.validate_on_submit():
+        userId = session['stay_user_id']
+        user = User.query.get_or_404(userId)
+        try:
+            newEmergencyEntry = EmergencyContacts(name=form.name.data, relationship=form.relationship.data, userId=userId, username=user.username)
+            db.session.add(newEmergencyEntry)
+            db.session.commit()
+        except Exception as e:
+            reportError(e)
+        return redirect(url_for('sublisting', userId=userId))
+    else:
+        # [flash(error) for error  in form.errors.values[]]
+        print(form.errors)
+    return render_template('prontoform/emergency.html', progress=90, form=form)
 
 
 @app.route('/listing/<int:userId>', methods=['GET','POST'])
@@ -1392,12 +1526,15 @@ def sublisting(userId):
 
         # updateSubListing(user.id)
             # flash(form.errors[0])
+
+    print("Passing This listing")
+    print(listing)
     return render_template('sublisting.html', user=user, message=message,sublistingform=sublistingform,listing=listing, sublistings=sublistings, form=form)
 
 @app.route('/mysublistings', methods=['GET', 'POST'])
 def mysublistings():
-    listing = Listing.query.get_or_404(1)
-    sublistings = SubListing.query.filter_by(listingSlug=listing.slug).all()
+    listing = getListing(1)
+    sublistings = SubListing.query.filter_by(superListing=listing.slug).all()
     return render_template('mysublistings.html',sublistings=sublistings, listing=listing,user=None)
 
 
@@ -1487,30 +1624,29 @@ def login():
     if request.method == 'POST':
         print(form.email.data)
         print(form.password.data)
-    # if form.validate_on_submit():
         user = User.query.filter_by(email = form.email.data).first()
         print(user)
-        if user and bcrypt.check_password_hash(user.password, form.password.data):
+        if user and bcrypt.check_password_hash(user.password, form.password.data) and user.role == 'admin':
             print("Logged in successful. \n " + user.username)
             sendTelegram("Logged in successful. \n " + user.username)
             login_user(user)
-                # login_user(user)
             next = request.args.get('next')
             # if not is_safe_url(next):
-            return redirect(next or url_for('users.dashboard')) 
+            return redirect(next or url_for('dashboard')) 
             # return redirect(url_f or(dashboard))
         else:
             print(form.password.data)
-            # print("The password is not correct")
+            print("The password is not correct")
             flash(f'There was a problem with your login credentials. Please check try again')
     else:
         print("This is a get request")
     return render_template('login.html', form=form)
 
-
 @app.route('/dashboard', methods=['GET', 'POST'])
+@login_required
 def dashboard():
-    listing = Listing.query.get_or_404(8)
+
+    listing = getListing(current_user.listing)
     activeUsers = User.query.filter_by(listingSlug = listing.slug).count()
     amountRecieved = listing.amountRecieved
     expected_revenue = listing.expectedRevenue
@@ -1522,9 +1658,8 @@ def dashboard():
     for c in bankTransactions:
         cashTransactions += c.amount
 
-    sublistings = SubListing.query.filter_by(listingSlug=listing.slug).count()
+    sublistings = SubListing.query.filter_by(superListing=listing.slug).count()
 
-    # todaysTransactions = Transactions.query.filter(func.date(Transactions.date_created) == func.date(datetime.datetime.utcnow()), Transactions.paid == True, Transactions.appId == "pronto").all()
     todaysTransactions = Transactions.query.filter(
     func.date(Transactions.date_created) == func.date(datetime.datetime.utcnow()),
     Transactions.paid == True,
@@ -1539,11 +1674,51 @@ def dashboard():
 
     occupied = 0
 
-    contacts = User.query.filter_by(listingSlug='mmogcc').count()   
+    contacts = User.query.filter_by(listingSlug=listing.slug).count()   
+
     transactionTypes = TransactionType.query.filter_by(superListing='mmogcc').count() 
     print(activeUsers)
-    return render_template('dashboard.html', successfulTransactions=successfulTransactions,transactions=transactions, transactionTypes=transactionTypes,cashTransactions=cashTransactions, contacts=contacts ,user=current_user, occupied=occupied,sublistings=sublistings, totalTodayTransactions=totalTodayTransactions,listing=listing, activeUsers=activeUsers, totalTransasactions=totalTransasactions,todaysBalance=todaysBalance,amountRecieved=amountRecieved, due=due,expected_revenue=expected_revenue)
 
+    weekTransactions = db.session.query(func.date(Transactions.date_created), func.sum(Transactions.amount)).filter(Transactions.paid == True, Transactions.appId == listing.slug, func.date(Transactions.date_created) > datetime.datetime.today() - datetime.timedelta(weeks=1) ).group_by(func.date(Transactions.date_created)).all()
+
+    dates = []
+    amount = []
+
+    for index, w in enumerate(weekTransactions):
+        print(w)
+        print(w[0])
+        dates.append(str(w[0]))
+        amount.append(w[1])
+        if index == 7:
+            break
+
+    try:
+        minAmount = min(amount)
+    except Exception as e:
+        print(e)
+        minAmount = 0
+
+    try:
+        maxAmount = max(amount)
+    except Exception as e:
+        print(e)
+        maxAmount = 0
+
+    print(str(maxAmount) + " - " + str(minAmount))
+
+    data = {
+        "tenants":contacts,
+        "rooms":sublistings,
+        "dates":dates,
+        "amount":amount,
+        "maxAmount":maxAmount,
+        "minAmount":minAmount,
+        "debtors":7,
+        "roomsOccupied":7
+    }
+
+    pprint.pprint(data)
+    return render_template('dashboard.html', data=data,successfulTransactions=successfulTransactions,transactions=transactions, transactionTypes=transactionTypes,cashTransactions=cashTransactions, contacts=contacts ,user=current_user, occupied=occupied,sublistings=sublistings, totalTodayTransactions=totalTodayTransactions,listing=listing, activeUsers=activeUsers, totalTransasactions=totalTransasactions,todaysBalance=todaysBalance,amountRecieved=amountRecieved, due=due,expected_revenue=expected_revenue)
 
 
 @app.route('/upload/<string:dataType>', methods=['GET', 'POST'])
@@ -1554,6 +1729,7 @@ def upload(listingSlug, dataType = None):
     if request.method == 'POST':
 
         if 'csv_file' not in request.files:
+            print("No CSV File!")
             return "No CSV file provided"
 
         csv_file = request.files['csv_file']
@@ -1566,10 +1742,10 @@ def upload(listingSlug, dataType = None):
 
         # Generate a unique file name with date-time stamp
         timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        filename = f"uploaded_csv_{timestamp}.csv"
+        # filename = f"uploaded_csv_{timestamp}.csv"
+        filename = f"{listing.slug}-rawdata.csv"
 
         # Save the processed CSV with the generated filename
-        
         save_path = os.path.join(app.root_path,"Uploads", filename)  # Replace "path_to_save" with your desired path
         
         with open(save_path, "w") as f:
@@ -1579,16 +1755,28 @@ def upload(listingSlug, dataType = None):
 
         if dataType == "transactions":
             message = uploadTransactions(save_path)
+
         elif dataType == "users":
-            message = uploadData(save_path)
+            newdatapath = getOccupants(save_path, listing)
+            message = uploadData(newdatapath, True)
+
         elif dataType == "rooms":
-            message = uploadRoomData(save_path, listing)
-
-        print(message)
-
+            folder = create_folder(os.path.join(app.root_path,listing.slug))    
+            writepath = os.path.join(app.root_path,folder, f'rooms-{timestamp}.csv')  # Replace "path_to_save" with your desired path
+            newdatapath = createRooms(save_path, writepath, listing)
+            message = uploadRoomData(newdatapath, listing, True)
+            return message
+        
         return redirect(url_for('dashboard'))
     
     return render_template('upload.html', users=users)
+
+@app.route('/alltransactions', methods=['GET', 'POST'])
+def alltransactions():
+
+    transactions = Transactions.query.filter_by(appId="cuoldgirls").order_by(Transactions.id.desc()).all()
+    print(transactions)
+    return render_template('alltransactions.html', transactions=transactions)
 
 
 @app.route('/transactions/<int:userId>', methods=['GET', 'POST'])
@@ -1670,7 +1858,6 @@ def profile(id):
         if request.method == 'POST':
             if form.validate_on_submit():
                 print(form.data)
-
                 try:
                     user.username = form.username.data
                     user.listing = form.listing.data
@@ -1684,14 +1871,14 @@ def profile(id):
 
                     flash(f'' + user.username+' has been updated successfully')
                     return redirect(url_for('dashboard'))
+                
                 except Exception as e:
-                    print(e)
                     reportError(e)
                     flash(f'Updating of your profile failed, please check and try again')
         
             else:
                 print(form.errors)
-                flash(form.errors[0])
+
 
         elif request.method == 'GET':
             form.username.data = user.username
@@ -1709,4 +1896,4 @@ def profile(id):
 
 
 if __name__ == '__main__':
-    app.run(port=5000, host="0.0.0.0",debug=True)
+    app.run(port=5000, host="0.0.0.0", debug=True)

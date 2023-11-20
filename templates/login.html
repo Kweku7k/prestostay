@@ -22,14 +22,19 @@
                 <h6 style="text-align: center; width: 100%; ">
                     Welcome back to your dashboard. If you are an admin and have access to this portal please put in your email and a password.
                 </h6>   
-                <div>
-                    {{form.email (class="inputCard", placeholder="Enter your email")}}
+                <div class="inputTextHolder">
+                    <h6>{{form.email.label}}</h6>
+                    {{form.email (class="inputTextCard", placeholder="Enter Your Email Address")}}
                     {% for error in form.email.errors %}
-                    <h6 style="color: red; font-weight: 100;">Error message</h6>
+                    <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                     {% endfor %}
                 </div>
-                <div>
-                    {{form.password (class="inputCard", placeholder="Enter your password")}}
+                <div class="inputTextHolder">
+                    <h6>{{form.password.label}}</h6>
+                    {{form.password (class="inputTextCard", placeholder="Enter Your Password")}}
+                    {% for error in form.password.errors %}
+                    <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                    {% endfor %}
                 </div>
                     {{form.submit(class="pill-button", style="width: 100%; margin-top:5vh;")}}
                 </form>
