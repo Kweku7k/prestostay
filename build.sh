@@ -16,7 +16,7 @@ source $venv_name/bin/activate
 pip install -r requirements.txt
 
 #Restart the forms application
-# sudo systemctl restart presto.service
+sudo systemctl restart stay.service
 
 # Deactivate the virtual environment
 #deactivate
