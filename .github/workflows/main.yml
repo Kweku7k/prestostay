@@ -1,0 +1,26 @@
+name: Deploy Stay
+
+on:
+  push:
+    branches:
+      - main # Replace with the branch you want to trigger the deployment
+
+jobs:
+  deploy:
+    name: Delploy On Presto Server!
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2      
+
+      - name: Executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST_DNS }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "Changing Directory To prestostay"
+            cd /var/www/prestostay && ./build.sh
+            # sudo systemctl restart stay.service
