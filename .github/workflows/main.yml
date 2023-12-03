@@ -23,4 +23,5 @@ jobs:
           script: |
             echo "Changing Directory To prestostay"
             cd /var/www/prestostay && ./build.sh
+            echo "Running Build"
             # sudo systemctl restart stay.service
