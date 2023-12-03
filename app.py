@@ -285,7 +285,7 @@ def getListing(id):
         print(e)
         print("Couldnt find a listing with this id.")
         listing = None
-    return listing
+    return Listing.query.get_or_404(1)
 
 def getAllListings(suggestion=None):
     if suggestion == None:
@@ -961,7 +961,7 @@ def editsublisting(sublisting):
 
 @app.route('/allusers', methods=['GET', 'POST'])
 @app.route('/allusers/<string:status>', methods=['GET', 'POST'])
-@login_required
+# @login_required
 def getallusers(status="all"):
     print(current_user)
     listing = getListing(current_user.listing)
@@ -1643,10 +1643,11 @@ def login():
     return render_template('login.html', form=form)
 
 @app.route('/dashboard', methods=['GET', 'POST'])
-@login_required
+
 def dashboard():
 
-    listing = getListing(current_user.listing)
+    # listing = getListing(current_user.listing)
+    listing = Listing.query.get_or_404(1)
     activeUsers = User.query.filter_by(listingSlug = listing.slug).count()
     amountRecieved = listing.amountRecieved
     expected_revenue = listing.expectedRevenue
