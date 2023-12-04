@@ -10,9 +10,13 @@
             <h4>All Tenants</h4>
             <h6 class="text-muted">{{listing.name}}</h6>
         </div>
-        <form class="d-flex">
-            <input class="form-control me-2" style="border-radius: 10px;" type="search" placeholder="Search" aria-label="Search">
-            <button class="pill-button" type="submit">Search</button>
+        <form class="d-flex" method="post">
+            {{form.hidden_tag()}}
+
+            {{form.search (style="border-radius: 10px;", class="form-control me-2", placeholder="Search a name" )}}
+            {{form.submit (class="pill-button")}}
+            <!-- <input class="form-control me-2" name="search" style="border-radius: 10px;" type="search" placeholder="Search" aria-label="Search"> -->
+            <!-- <button class="pill-button" type="submit">Search</button> -->
           </form>
     </div>
     <!-- Scale -->

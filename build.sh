@@ -23,4 +23,3 @@ sudo systemctl restart stay.service
 
 # Deactivate the virtual environment
 #deactivate
-

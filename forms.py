@@ -61,6 +61,11 @@ class PaymentForm(FlaskForm):
     note = StringField('Leave A Note.')
     submit = SubmitField('Proceed')
 
+class SearchForm(FlaskForm):
+    search = StringField('Search', validators=[DataRequired()])
+    submit = SubmitField('Search')
+
+
 class ListingForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     email = EmailField('Name', validators=[DataRequired()])
@@ -90,12 +95,12 @@ class ProfileForm(FlaskForm):
     phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
     email = StringField('Email', validators=[DataRequired()])
     indexNumber = StringField('Index Number')
-    listing = StringField('Listing', validators=[DataRequired()])
+    roomNumber = StringField('Room Number')
+    listing = StringField('Listing')
 
     balance = FloatField('Balance')
     paid = FloatField('Paid')
     fullAmount = FloatField('FullAmount')
-
     submit = SubmitField('Update')
 
 class OnboardForm(FlaskForm):
@@ -103,8 +108,8 @@ class OnboardForm(FlaskForm):
     phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
     email = StringField('Email', validators=[DataRequired()])
     listing = SelectField('Listing', choices=[]) #Api call for all rooms
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
-    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password', message='Your passwords dont match, please try again')])
+    password = PasswordField('Password', validators=[Length(min=6)])
+    # confirm_password = PasswordField('Confirm Password', validators=[EqualTo('password', message='Your passwords dont match, please try again')])
     submit = SubmitField('Update')
 
 class RegisterForm(FlaskForm):

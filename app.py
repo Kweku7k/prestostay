@@ -961,28 +961,43 @@ def editsublisting(sublisting):
 
 @app.route('/allusers', methods=['GET', 'POST'])
 @app.route('/allusers/<string:status>', methods=['GET', 'POST'])
-# @login_required
-def getallusers(status="all"):
+@login_required
+def getallusers(status="all", search=None):
+    form = SearchForm()
     print(current_user)
     listing = getListing(current_user.listing)
     minimum = 700
+    users = User.query.filter_by(listingSlug=listing.slug).all()
 
-    if status == "debt":
-        users = User.query.filter(User.listingSlug == listing.slug, User.paid <= minimum).all()
-    elif status == "full":
-        users = User.query.filter(User.listingSlug == listing.slug, User.paid >= User.fullAmount).all()
-    elif status == "min":
-        users = User.query.filter(User.listingSlug == listing.slug, User.paid >= minimum ).all()
-    elif status == "grad":
-        users = User.query.filter(User.listingSlug == listing.slug, User.paid <= minimum).all()
+    if request.method == 'POST':
+        search=form.search.data
+        print("Searching: ", search)
+        users = User.query.filter(User.username.ilike(f'%{search}%')).all()
+        print(users)
+
+        
     else:
-        users = User.query.filter_by(listingSlug=listing.slug).all()
-    return render_template('allusers.html', users=users, listing=listing, status=status)
+        if status == "debt":
+            users = User.query.filter(User.listingSlug == listing.slug, User.paid <= minimum).all()
+        elif status == "full":
+            users = User.query.filter(User.listingSlug == listing.slug, User.paid >= User.fullAmount).all()
+        elif status == "min":
+            users = User.query.filter(User.listingSlug == listing.slug, User.paid >= minimum ).all()
+        elif status == "grad":
+            users = User.query.filter(User.listingSlug == listing.slug, User.paid <= minimum).all()
+        # elif search is not None:
+        #     users = User.query.filter(User.name.like(f'%{search}%')).all()
+            # users = User.query.filter(User.listingSlug == listing.slug, User.paid <= minimum).all()
+
+
+    return render_template('allusers.html', users=users, form=form,listing=listing, status=status)
 
 @app.route('/onboard', methods=(['POST','GET']))
 def onboard():
     form = OnboardForm()
     form.listing.choices = [(listing.slug, listing.name) for listing in Listing.query.all()]
+    form.password.data = '000000'
+    
     if current_user:
         logout_user()
         print ("You have been logged out")
@@ -1016,7 +1031,7 @@ def onboard():
             print("Registered new user: " + newuser.username + " " + newuser.email)
             
             print(form.password.data)
-            print(form.confirm_password.data)
+            # print(form.confirm_password.data)
 
             user = User.query.filter_by(email=form.email.data).first()
 
@@ -1025,6 +1040,12 @@ def onboard():
 
     else:
         print(form.errors)
+
+        # errors = [value for value.messages in form.errors.values()]
+        # print(errors)
+        # for error in errors:
+        #     flash(error)
+
     return render_template('onboard.html', form=form, title="Onboard New User")
 
 
@@ -1067,7 +1088,6 @@ def register(organisationslug = None):
                 return render_template('register.html', form=form, title="Onboard New User")
             
             else:
-
                 hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
                 newuser = User(username=form.username.data, email=form.email.data, phone=form.phone.data, listing=form.organisation.data, listingSlug=form.organisation.data, password=hashed_password)
                 print(newuser)
@@ -1091,11 +1111,6 @@ def register(organisationslug = None):
                 return redirect(url_for('pay', userId=user.id))
         else:
             print(form.errors)
-
-
-    
-    
-
     return render_template('register.html', organisation=organisation,welcomeDescription=welcomeDescription, form=form, title=title, welcomeMessage=welcomeMessage)
 
 
@@ -1298,7 +1313,7 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route("/broadcast", methods=['GET','POST'])
-# @login_required
+@login_required
 def broadcast():
     listing = Listing.query.get_or_404(1)
     form = BroadcastForm()
@@ -1850,49 +1865,80 @@ def updateBalance():
     flash(f'Data has been updated!')
     return redirect(url_for('dashboard'))
 
-@app.route('/profile/<int:id>', methods=['GET', 'POST'])
-def profile(id):
+def updateUserProfileBalance(id):
     user = User.query.get_or_404(id)
+    try:
+        user.balance = user.fullAmount - user.paid
+        db.session.commit()
+    except Exception as e:
+        reportError(e)
+    return "Done!"
+
+@app.route('/profile', methods=['GET', 'POST'])
+@app.route('/profile/<int:id>', methods=['GET', 'POST'])
+@login_required
+def profile(id=None):
     form = ProfileForm()
-    if user != None:
-        print(user)
-        if request.method == 'POST':
-            if form.validate_on_submit():
-                print(form.data)
-                try:
-                    user.username = form.username.data
-                    user.listing = form.listing.data
-                    user.balance = form.balance.data
-                    user.paid = form.paid.data
-                    user.phone = form.phone.data
-                    user.indexNumber = form.indexNumber.data
-                    user.fullAmount = form.fullAmount.data
-                    user.email = form.email.data
-                    db.session.commit()
+    listing = current_user.listing
+    print(listing)
+    # getAllListings()
+    if id is not None:
+        user = User.query.get_or_404(id)
+        if user != None:
+            print(user)
+            if request.method == 'POST':
+                if form.validate_on_submit():
+                    print(form.data)
+                    try:
+                        user.username = form.username.data
+                        user.listing = form.listing.data
+                        user.balance = form.balance.data
+                        user.paid = form.paid.data
+                        user.roomNumber = form.roomNumber.data
+                        user.phone = form.phone.data
+                        user.indexNumber = form.indexNumber.data
+                        user.fullAmount = form.fullAmount.data
+                        user.email = form.email.data
+                        db.session.commit()
 
-                    flash(f'' + user.username+' has been updated successfully')
-                    return redirect(url_for('dashboard'))
-                
-                except Exception as e:
-                    reportError(e)
-                    flash(f'Updating of your profile failed, please check and try again')
-        
-            else:
-                print(form.errors)
+                        updateUserProfileBalance(id)
 
+                        flash(f'' + user.username+' has been updated successfully')
+                        return redirect(url_for('getallusers'))
+                    
+                    except Exception as e:
+                        reportError(e)
+                        flash(f'Updating of your profile failed, please check and try again')
+            
+                else:
+                    print(form.errors)
 
-        elif request.method == 'GET':
-            form.username.data = user.username
-            form.listing.data = user.listing
-            form.balance.data = user.balance
-            form.phone.data = user.phone
-            form.indexNumber.data = user.indexNumber
-            form.fullAmount.data = user.fullAmount
-            form.email.data = user.email
-            form.paid.data = user.paid
-        return render_template('profile.html', user=user, form=form)
+            elif request.method == 'GET':
+                form.username.data = user.username
+                form.listing.data = user.listing
+                form.balance.data = user.balance
+                form.phone.data = user.phone
+                form.indexNumber.data = user.indexNumber
+                form.fullAmount.data = user.fullAmount
+                form.roomNumber.data = user.roomNumber
+                form.email.data = user.email
+                form.paid.data = user.paid
     else:
-        return render_template('404.html', message = "The user you chose cant be found")
+        user = None
+        # listing = current_user
+        form.listing.data = listing
+        if request.method == 'POST':
+            try:
+                newuser = User(username=form.username.data, email=form.email.data, phone=form.phone.data, listing=listing)
+                db.session.add(newuser)
+                db.session.commit()
+
+                updateUserBalance(newuser)
+            except Exception as e:
+                reportError(e)
+    return render_template('profile.html', user=user, form=form, listing=getListing(1))
+    # else:
+    #     return render_template('404.html', message = "The user you chose cant be found")
 
 
 

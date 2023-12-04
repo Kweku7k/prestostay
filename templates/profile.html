@@ -13,6 +13,12 @@
                     <img src="{{url_for('static', filename='img/memoji.png')}}" style="width: 100%;" alt="" srcset="">
                     </div>
 
+                    {% if user == None %}
+                    <h1 class="heading" style="text-align: center; margin-top: 5vh;">Add a new tenant</h1>
+                    <h6 style="text-align: center; width: 100%; " class="text-muted">{{listing.name}} </h6>   
+                    
+                    {% endif %}
+
                     <h1 class="heading" style="text-align: center; margin-top: 5vh;">{{user.username}}</h1>
                     <h6 style="text-align: center; width: 100%; " class="text-muted">{{user.listing}} </h6>   
                     <!-- <h6 style="text-align: center; width: 100%; ">{{user.phone}} </h6>    -->
@@ -25,7 +31,7 @@
                         {{form.hidden_tag()}}
                         <div class="inputTextHolder">
                             <h6>{{form.username.label}}</h6>
-                            {{form.username (class="inputTextCard", placeholder="How much are you sending")}}
+                            {{form.username (class="inputTextCard", placeholder="Enter a full name")}}
                             {% for error in form.username.errors %}
                             <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                             {% endfor %}
@@ -41,22 +47,22 @@
 
 
 
-                        <div class="inputTextHolder">
+                        <!-- <div class="inputTextHolder">
                             <h6>{{form.listing.label}}</h6>
-                            {{form.listing (class="inputTextCard", placeholder="How much are you sending")}}
+                            {{form.listing  (class="inputTextCard disabled" )}}
                             {% for error in form.listing.errors %}
                             <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                             {% endfor %}
-                        </div>
+                        </div> -->
 
 
-                        <!-- <div class="inputTextHolder">
-                            <h6>{{form.indexNumber.label}}</h6>
-                            {{form.indexNumber (class="inputTextCard", placeholder="How much are you sending")}}
-                            {% for error in form.indexNumber.errors %}
+                        <div class="inputTextHolder">
+                            <h6>{{form.roomNumber.label}}</h6>
+                            {{form.roomNumber (class="inputTextCard", placeholder="Which room are you assigned to")}}
+                            {% for error in form.roomNumber.errors %}
                             <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                             {% endfor %}
-                        </div> -->
+                        </div>
 
 
                         <div class="inputTextHolder">
@@ -101,6 +107,8 @@
                     </div>
                         {{form.submit(class="pill-button", onclick="showLoadingScreen()", style="width: 100%; margin-top:5vh;")}}
                     </form>
+                    <br/>
+                    <button class="pill-button-alternate full">Transactions</button>
                 </div>
             </div>
         </div>
