@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+
+{% block head %}
+
+{% endblock %}
+{% block body %}
+
+    <div class="container">
+        <div class="row" style="justify-content: space-around; margin-top: 5vh;">
+            <div class="col-md-6">
+                <div class="defaultCard">
+                    <div class="ellipse" style="border: none; border-radius: 50%; overflow: hidden; margin: auto; background-color: rgb(48, 44, 255); border-radius:rgb(48, 44, 255);">
+                    <img src="{{url_for('static', filename='img/memoji.png')}}" style="width: 100%;" alt="" srcset="">
+                    </div>
+
+                    <h6 class="heading" style="text-align: center; margin-top: 5vh;">{{user.username}} - {{listing.name}}</h6>
+                    <h1 class="heading" style="text-align: center;">Request Refund</h1>
+                    <h6 class="text-muted" style="text-align: center;">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quam qui praesentium dignissimos repellat eligendi reprehenderit nemo, debitis ducimus vitae nulla, dolor aliquid ab eveniet? Dignissimos sed omnis aliquam architecto laborum.</h6>
+                    <!-- <h6 style="text-align: center; width: 100%; " class="text-mu   ted">{{listing.name}} </h6>    -->
+                    <!-- <h6 style="text-align: center; width: 100%; ">{{user.phone}} </h6>    -->
+                    
+                    <br/>
+
+                    <div class="flexBar"><h6>Name</h6><h6 class="text-muted">{{user.username}}</h6></div>
+                    <div class="flexBar"><h6>Phone</h6><h6 class="text-muted">{{user.phone}}</h6></div>
+
+
+                    {% if user.roomNumber %}
+                        <div class="flexBar"><h6>Room Number</h6><h6 class="text-muted">{{user.roomNumber}}</h6></div>
+                    {% endif %}
+                        <!-- <div class="flexBar"><h6>Amount Paid</h6><h6 class="text-muted">GHS {{user.paid}}</h6></div> -->
+                    <!-- <div class="flexBar"><h6>Date Due</h6><h6 class="text-muted">undefined</h6></div> -->
+                    <!-- <div class="flexBar"><h6>Status</h6><h6 class="text-muted">{{user.status}}</h6></div> -->
+                    
+                    <!-- <hr>
+                    {% if user.fullAmount > 0 %}
+                        <div class="flexBar"><h6>Amount Due</h6><h6 class="text-muted">GHS {{user.fullAmount}}</h6></div>
+                    {% endif %}
+                    
+                    <div class="flexBar"><h6>Amount Paid</h6><h6 class="text-muted">GHS {{user.paid}}</h6></div>
+
+                    {% if user.fullAmount > 0 %}
+                        <div class="flexBar"><h6>Outstanding Balance</h6><h6 class="text-muted">GHS {{user.balance}}</h6></div>
+                    {% endif %} -->
+                    <!-- <div class="flexBar"><h6>Last Payment</h6><h6 class="text-muted">{{user.lastpayment}}</h6></div> -->
+                    <hr>
+                        <form action="" method="post">
+                            {{form.hidden_tag()}}
+
+                            {% if form.transactionType.choices|length > 1 %}
+                            <div class="inputTextHolder">
+                                <h6>{{form.transactionType.label}}</h6>
+                                {{form.transactionType (class="inputTextCard", placeholder="Enter transactionType Here")}}
+                                {% for error in form.transactionType.errors %}
+                                <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <div class="inputTextHolder">
+                                <h6>{{form.amount.label}}</h6>
+                                {{form.amount (class="inputTextCard", placeholder="Enter Amount Here")}}
+                                {% for error in form.amount.errors %}
+                                <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                                {% endfor %}
+                            </div>
+                            <div class="inputTextHolder">
+                                <h6>{{form.reason.label}}</h6>
+                                {{form.reason (class="inputTextCard", placeholder="Enter reason Here")}}
+                                {% for error in form.reason.errors %}
+                                <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                                {% endfor %}
+                            </div>
+                            <!-- <h6 style="color: grey; font-weight: 700; margin-top: 1vh;">Outstanding Balance: GHS {{user.balance}}</h6> -->
+
+
+                                {{form.submit(class="pill-button", style="width: 100%; margin-top:5vh;")}}
+                            
+
+                            
+
+                        </form>
+
+                        {% if current_user.role != user  %}
+                            {% if refund %}
+                                <a href='{{url_for("actionrefund", id=refund.id, action=0)}}'>
+                                    <button class="pill-button">Deny</button>
+                                </a>
+                                <a href='{{url_for("actionrefund" ,id=refund.id, action=1)}}'>
+                                    <button class="pill-button-alternate">Approve</button>
+                                </a>
+                            {% endif %}
+                        {% endif %}
+
+                        
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

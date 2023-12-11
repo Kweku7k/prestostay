@@ -1,0 +1,109 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+<div class="container">
+    <br/>
+
+    <div> 
+        <div class="me-2">
+            <div class="flexBar">
+                <div>    
+                    <h4>All Periods</h4>
+                    <h6 class="text-muted">{{listing.name}}</h6>
+                </div>
+                <a href="{{url_for('period')}}">
+                    <button class="pill-button-alternate">Add A Reservation</button>
+                </a>
+            </div>
+        </div>
+        <br/>
+        <form class="d-flex" method="post">
+            {{form.hidden_tag()}}
+
+            {{form.search (style="border-radius: 10px;", class="form-control me-2", placeholder="Search a name" )}}
+            {{form.submit (class="pill-button")}}
+            <!-- <input class="form-control me-2" name="search" style="border-radius: 10px;" type="search" placeholder="Search" aria-label="Search"> -->
+            <!-- <button class="pill-button" type="submit">Search</button> -->
+          </form>
+    </div>
+    <!-- Scale -->
+    <br/>
+<div style="display: flex; justify-content: space-around; align-items: center;">
+
+    <a href="{{url_for('getallusers', status='full')}}">
+
+            {% if status == "full" %}
+            <div style="display: flex;"  class="selected" >
+            {% else %}
+            <div style="display: flex;" >
+            {% endif %}
+
+            <div style="width: 10px; height: 10px; background-color: purple; border-radius: 50%; margin: auto; margin-right: 10px;"></div>
+            <h6>Approved By Finance</h6>
+        </div>
+    </a>
+        
+    <a href="{{url_for('getallusers', status='min')}}">
+        {% if status == "min" %}
+        <div style="display: flex;"   class="selected" >
+        {% else %}
+        <div style="display: flex;" >
+        {% endif %}
+            <div style="width: 10px; height: 10px; background-color: rgb(255, 170, 0); border-radius: 50%; margin: auto; margin-right: 10px;"></div>
+            <h6>Pending Approval By Finance</h6>
+        </div>
+    </a>
+
+    <a href="{{url_for('getallusers', status='debt')}}">
+
+        {% if status == "debt" %}
+        <div style="display: flex;"   class="selected" >
+        {% else %}
+        <div style="display: flex;" >
+        {% endif %}
+            <div style="width: 10px; height: 10px; background-color: red; border-radius: 50%; margin: auto; margin-right: 10px;"></div>
+            <h6>Pending Approval By Admin</h6>
+        </div>
+    </a>
+
+    <a href="{{url_for('getallusers', status='debt')}}">
+
+        {% if status == "debt" %}
+        <div style="display: flex;"   class="selected" >
+        {% else %}
+        <div style="display: flex;" >
+        {% endif %}
+            <div style="width: 10px; height: 10px; background-color: green; border-radius: 50%; margin: auto; margin-right: 10px;"></div>
+            <h6>Refunded!</h6>
+        </div>
+    </a>
+
+    <a href="{{url_for('getallrefunds')}}">
+        <box-icon  name='x'></box-icon>
+    </a>
+
+</div>
+
+
+    <br/>
+    {% for period in periods %}
+    <a href="{{url_for('period',id=period.id )}}">
+        <div class="card row" style=" display: flex; justify-content: space-between; padding: 20px; flex-direction: row;">
+
+            <div style="width:fit-content; ">
+                <h6 style="width: fit-content;">{{period.id}} . {{period.name}}</h6>
+                <h6 style="width: fit-content;" class="text-muted">{{period.roomNumber}} GHC{{period.amount}} </h6>
+            </div>
+
+            <div style="width:fit-content; align-items: center;">
+                <h6 style="color: rgba(255, 0, 0, 0.539);" >{{period.start_date.strftime('%c')}}</h6>
+                <h6 style="color: green;" >{{period.end_date.strftime('%c')}}</h6>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+
+</div>
+
+{% endblock %}

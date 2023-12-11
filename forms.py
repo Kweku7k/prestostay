@@ -52,6 +52,16 @@ class ProntoProfileFormEmergencyInformation(FlaskForm):
     relationship = SelectField('Relationship To Emergency Contact', choices=['Daddy'])
     submit = SubmitField('Done')
 
+class RefundForm(FlaskForm):
+    name = StringField('Name')
+    amount = StringField('Refund Amount', validators=[DataRequired()])
+    indexNumber = StringField('Index Number')
+
+    reason = StringField('Reason', widget=TextArea(), validators=[DataRequired()])
+
+    contact = StringField('A phone number we can reach you on.')
+    transactionType = SelectField('Transaction Type', choices=[('Default','Default'),('Refund', 'Refund')])
+    submit = SubmitField('Request Refund!')
 
 class PaymentForm(FlaskForm):
     name = StringField('Name')
@@ -60,6 +70,15 @@ class PaymentForm(FlaskForm):
     transactionType = SelectField('Transaction Type', choices=['Default'])
     note = StringField('Leave A Note.')
     submit = SubmitField('Proceed')
+
+class TenancyPeriodForm(FlaskForm):
+    name = StringField('Name')
+    startDate = DateField('Start Date', validators=[DataRequired()])
+    endDate = DateField('End Date', validators=[DataRequired()])
+    reservationStartDate = DateField('Open Reservations', validators=[DataRequired()])
+    reservationEndDate = DateField('Close Reservations', validators=[DataRequired()])
+    reservationMinimum = IntegerField('Minimum Reservation Amount', validators=[DataRequired()])
+    submit = SubmitField('Create Reservation')
 
 class SearchForm(FlaskForm):
     search = StringField('Search', validators=[DataRequired()])

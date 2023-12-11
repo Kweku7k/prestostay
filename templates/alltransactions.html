@@ -4,7 +4,15 @@
 
 <div class="container">
 <div class="info-block" style="margin-top: 5vh;">
-<h4 onclick="openNav()">Transactions</h4>
+
+  <div class="flexBar">
+    <h4 onclick="openNav()">Transactions</h4>
+    {% if user %}
+      <a href="{{url_for('refund', userId=user.id)}}">
+        <button class="pill-button">Request Refund</button>
+      </a>
+    {% endif %}
+  </div>
 
 
 <br>

@@ -12,13 +12,14 @@ from sqlalchemy import Enum, func
 from itsdangerous import Serializer
 from flask_bcrypt import Bcrypt
 from dataprocessing import convertToNumber, createRooms, getOccupants
-from utils import apiResponse, create_folder, send_sms, sendTelegram, sendVendorTelegram, reportTelegram  
+from utils import apiResponse, create_folder, send_sms, sendAnEmail, sendTelegram, sendVendorTelegram, reportTelegram  
 from forms import *
 import pprint
 import time
 import requests
 import geocoder
 from urllib.parse import quote as url_quote
+from sqlalchemy import or_
 
 
 app=Flask(__name__)
@@ -65,6 +66,28 @@ class Suggestions(db.Model):
 
     def __repr__(self):
         return f"Suggestion('id: {self.id}', 'suggestion:{self.suggestion}', 'slug:{self.slug}')"
+  
+
+class Refund(db.Model):
+    tablename = ['Refund']
+
+    id = db.Column(db.Integer, primary_key=True)
+    amount = db.Column(db.String)
+    roomNumber = db.Column(db.String)
+    name = db.Column(db.String)
+    listingSlug = db.Column(db.String)
+    userId = db.Column(db.String)
+    reason = db.Column(db.String)
+    account = db.Column(db.String)
+    date = db.Column(db.DateTime, default=datetime.datetime.utcnow())
+    datepaid = db.Column(db.DateTime)
+    financeApprove = db.Column(db.Boolean, default=False)
+    adminApprove = db.Column(db.Boolean, default=False)
+
+    listingId = db.Column(db.Integer, db.ForeignKey('listing.id'))
+
+    def __repr__(self):
+        return f"Refund('id: {self.id}', 'user:{self.userId} - {self.name} - {self.listingSlug}', 'date:{self.date}')"
   
     
 class TransactionType(db.Model):
@@ -157,6 +180,22 @@ class Image(db.Model):
     def __repr__(self):
         return f"Listing('id: {self.id}', 'name:{self.suggestion}', 'location:{self.location}')" 
 
+class TenancyPeriod(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    listingId = db.Column(db.String)
+    listingSlug = db.Column(db.String)
+    name = db.Column(db.String)
+    date_added = db.Column(db.DateTime, default=datetime.datetime.utcnow())
+    start_date = db.Column(db.DateTime)
+    end_date = db.Column(db.DateTime)
+    reservation_start_date = db.Column(db.DateTime)
+    reservation_end_date = db.Column(db.DateTime)
+    reservation_minimum = db.Column(db.String)
+    active = db.Column(db.Boolean, default=True)
+
+    def __repr__(self):
+        return f"TenancyPeriod('id: {self.id}', 'name:{self.active}', 'location:{self.listingSlug}')" 
+
 class LocationTagEnum(Enum):
     on_campus = 'on_campus'
     off_campus = 'off_campus'
@@ -200,6 +239,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String,nullable=False,unique=False)
     email = db.Column(db.String())
     password = db.Column(db.String(), primary_key=False, unique=False, nullable=False)
+    # dailyDisbursal = db.Column(db.Boolean, default=False)
 
     def get_reset_token(self, expires_sec=1800):
         s = Serializer(app.config['SECRET_KEY'], expires_sec)
@@ -972,10 +1012,14 @@ def getallusers(status="all", search=None):
     if request.method == 'POST':
         search=form.search.data
         print("Searching: ", search)
-        users = User.query.filter(User.username.ilike(f'%{search}%')).all()
+        users = User.query.filter(User.username.ilike(f'%{search}%'), User.roomNumber.ilike(f'%{search}%')).all()
+
+
+        users = User.query.filter(or_(User.username.ilike(f'%{search}%'), User.roomNumber.ilike(f'%{search}%'))).all()
+
+
         print(users)
 
-        
     else:
         if status == "debt":
             users = User.query.filter(User.listingSlug == listing.slug, User.paid <= minimum).all()
@@ -985,12 +1029,40 @@ def getallusers(status="all", search=None):
             users = User.query.filter(User.listingSlug == listing.slug, User.paid >= minimum ).all()
         elif status == "grad":
             users = User.query.filter(User.listingSlug == listing.slug, User.paid <= minimum).all()
-        # elif search is not None:
-        #     users = User.query.filter(User.name.like(f'%{search}%')).all()
-            # users = User.query.filter(User.listingSlug == listing.slug, User.paid <= minimum).all()
-
-
     return render_template('allusers.html', users=users, form=form,listing=listing, status=status)
+
+
+@app.route('/allrefunds', methods=['GET', 'POST'])
+@app.route('/allrefunds/<string:status>', methods=['GET', 'POST'])
+@login_required
+def getallrefunds(status="all", search=None):
+    form = SearchForm()
+    print(current_user)
+    listing = getListing(current_user.listing)
+    minimum = 700
+    refunds = Refund.query.filter_by(listingSlug=listing.slug).all()
+
+    if request.method == 'POST':
+        search=form.search.data
+        print("Searching: ", search)
+        users = User.query.filter(User.username.ilike(f'%{search}%'), User.roomNumber.ilike(f'%{search}%')).all()
+
+
+        users = User.query.filter(or_(User.username.ilike(f'%{search}%'), User.roomNumber.ilike(f'%{search}%'))).all()
+
+
+        print(users)
+
+    else:
+        if status == "debt":
+            users = User.query.filter(User.listingSlug == listing.slug, User.paid <= minimum).all()
+        elif status == "full":
+            users = User.query.filter(User.listingSlug == listing.slug, User.paid >= User.fullAmount).all()
+        elif status == "min":
+            users = User.query.filter(User.listingSlug == listing.slug, User.paid >= minimum ).all()
+        elif status == "grad":
+            users = User.query.filter(User.listingSlug == listing.slug, User.paid <= minimum).all()
+    return render_template('allrefunds.html', refunds=refunds, form=form,listing=listing, status=status)
 
 @app.route('/onboard', methods=(['POST','GET']))
 def onboard():
@@ -1116,11 +1188,9 @@ def register(organisationslug = None):
 
 @app.route('/maps', methods=['GET', 'POST'])
 def maps():
-
     ipData = get_user_location()
     print(mapsApiKey)
     print(ipData)
-
     return render_template('mapsandbox.html', mapsApiKey=mapsApiKey, ipData=ipData)
 
 
@@ -1306,6 +1376,159 @@ def pay(userId):
             print(form.errors)    
     return render_template('confirmUser.html', user=user, listing=listing, form=form)
 
+@app.route('/actionrefund/<int:id>/<int:action>')
+def actionrefund(id,action):
+    print("action")
+    print(action)
+    refund = Refund.query.get_or_404(id)
+    user = User.query.get_or_404(refund.userId)
+    if current_user.role != '':
+        if action == 1:
+            # sendsms to user
+            send_sms(user.phone,f"Congratulations, {refund.name} your refund has been approved by the administrator! We are currently pending approval by finance and then you are good to go! \n\n Powered By PrestoGhana")
+
+            # sendtelegram to group include user who approved
+            sendTelegram(f"Refund Id: {refund.id} \n{refund.name} - {refund.amount} \nApproved by the admin and forwarded to finance! ")
+
+            sendAnEmail("PrestStay", f'ACTION REQUIRED: Approve Refund {refund.id} - {refund.name} - {refund.amount}', f'Refund Id: {refund.id} \nName:{refund.name}\nAmount:{refund.amount}\nDate Requested:{refund.date}. \n\nPlease confirm this transaction on your PrestoSolutions dashboard ',"mr.adumatta@gmail.com")
+
+            flash(f'Refund Id: {refund.id} has been processed and forwarded to Finance.')
+
+        else:
+            flash(f'No action was taken.')
+    return redirect(url_for('dashboard'))
+
+@app.route('/allperiods', methods=['GET', 'POST'])
+def getallperiods():
+    form = SearchForm()
+    # view all periods
+    # what happens when a search is successful!
+    listing = getListing(current_user)
+    print(listing)
+    periods = TenancyPeriod.query.filter_by(listingSlug=current_user.listingSlug).all()
+    print(periods)
+    return render_template('periods.html', form=form,periods=periods, listing=listing)
+
+@app.route('/period/', methods=['GET', 'POST'])
+@app.route('/period/<int:id>', methods=['GET', 'POST'])
+def period(id=None):
+    print(id)
+    form = TenancyPeriodForm()
+    rooms = SubListing.query.filter_by(listingSlug=current_user.listingSlug).all()
+    listing = getListing(current_user.listingSlug)
+
+    if id is not None:
+        period = TenancyPeriod.query.get_or_404(id)
+    else:
+        period = None
+
+    print(listing)
+
+    if request.method == 'POST':
+        if form.validate_on_submit():
+
+            if period is not None:
+                # update
+                period.name = form.name.data
+                form.name.data = period.name
+                period.reservation_minimum = form.reservationMinimum.data 
+                period.reservation_start_date = form.reservationStartDate.data 
+                period.reservation_end_date = form.reservationEndDate.data 
+
+                period.start_date = form.startDate.data 
+                period.end_date = form.endDate.data
+
+                try:
+                    db.session.commit()
+                    flash(f'Your period {period.name} was updated successfully.')
+                    return redirect(url_for('getallperiods'))
+                except Exception as e:
+                    flash(f'There was an issue updating this records')
+            else:
+                try:
+                    newperiod = TenancyPeriod(name=form.name.data, listingId=listing.id, listingSlug=listing.slug, start_date=form.startDate.data, end_date=form.endDate.data, reservation_start_date=form.reservationStartDate.data, reservation_end_date=form.reservationEndDate.data, reservation_minimum=form.reservationMinimum.data)
+                    db.session.add(newperiod)
+                    db.session.commit()
+                    flash(f'Tenancy Period - {newperiod.name} has been created successfully')
+                    return redirect(url_for('getallperiods'))
+                except Exception as e:
+                    reportError(e)
+        else:
+            print(form.errors)
+    if request.method == 'GET':
+        if id is not None:
+            period = TenancyPeriod.query.get_or_404(id)
+            
+            form.name.data = period.name
+            form.reservationMinimum.data = period.reservation_minimum
+            form.reservationStartDate.data = period.reservation_start_date
+            form.reservationEndDate.data = period.reservation_end_date
+
+            form.startDate.data = period.start_date
+            form.endDate.data = period.end_date
+            # form.submit = 'Update!'
+    return render_template('period.html', form=form, rooms=rooms, listing=listing)
+
+@app.route('/findrefund/<int:id>', methods=['GET', 'POST'])
+@login_required
+def findrefund(id):
+    form = RefundForm()
+
+    refund = Refund.query.get_or_404(id)
+    user = User.query.get_or_404(refund.userId)
+
+    listing = Listing.query.filter_by(slug=user.listingSlug).first()
+    choices = TransactionType.query.filter_by(superListing=user.listingSlug).all()
+
+    # refundAmount
+
+    form.amount.data = refund.amount
+    form.reason.data = refund.reason
+    # reason
+
+    return render_template('refund.html', user=user, listing=listing, form=form, current_user=current_user, refund=refund)
+
+
+@app.route('/refund/<int:userId>', methods=['GET','POST'])
+def refund(userId):
+    print("current_user")
+    # print(current_user.username)
+    user = User.query.get_or_404(userId)
+    form = RefundForm()
+    listing = Listing.query.filter_by(slug=user.listingSlug).first()
+    choices = TransactionType.query.filter_by(superListing=user.listingSlug).all()
+
+    if len(choices) > 0:
+        form.transactionType.choices = [transactionType.name for transactionType in choices]
+    else:
+        form.transactionType.data = 'Refund'
+    if request.method == 'POST':
+        if form.validate_on_submit():
+
+            try:
+                requestedRefund = Refund(name=user.username, amount=form.amount.data, listingSlug=listing.slug, userId=user.id, reason=form.reason.data, listingId=listing.id, roomNumber=user.roomNumber)
+                db.session.add(requestedRefund)
+                db.session.commit()
+            except Exception as e:
+                reportError(e)
+
+            smsmessage = f'Hello, {user.username} your request for a refund of GHS{requestedRefund.amount} has been recieved and is being processed. Someone from the Administration will reach out to you in due time.'
+            # send an sms to the user
+            # send_sms(user.phone, smsmessage)
+
+            # update in the telegram group
+            telegramMessage = f'A refund of GHS{requestedRefund.amount} has been request by {user.username}. \nReason:{requestedRefund.reason}\n Please visit your dashboard and take action. \nTicketId: {listing.slug}-{requestedRefund.id}-{form.transactionType.data}'
+            sendTelegram(telegramMessage)
+            
+            # send an email to finance
+            sendAnEmail('Presto Stay', f'Refund of GHS{requestedRefund.amount}', telegramMessage, 'mr.adumatta@gmail.com')
+            # pass
+            flash(f'Your request has been processed, your will recieve a confirmation message soon.')
+            return redirect(url_for('pay', userId=user.id))
+        else:
+            print(form.errors)    
+    return render_template('refund.html', user=user, listing=listing, form=form, )
+
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
     flash("You have been successfully logged out")
@@ -1393,8 +1616,49 @@ def aggregateValues(value):
     return distinct_values
 
 
+@app.route('/getroomid/<string:input_string>')
+def getroomid(input_string):
+    # block = ''.join(filter(str.isalpha, input_string))
+    # roomId = ''.join(filter(str.isdigit, input_string))
+
+    block = input_string[0]
+    roomId = input_string.replace(block, "")
+
+    print(block)
+    print(roomId)
+    return (roomId, block)
+
+@app.route('/updateroomdata/<string:superListing>', methods=['GET', 'POST'])
+def updateroomdata(superListing):
+    # loop to set bedsTaken to 0:
+    # allrooms = SubListing.query.filter_by(listingSlug=superListing).all()
+    # for room in allrooms:
+    #     room.bedsTaken = 0
+    #     db.session.commit()
+
+    print("Finding tenants in :"+superListing)
+    tenants = User.query.filter_by(listingSlug=superListing).all()
+    print(tenants)
+
+    for i in tenants:
+        print(i.roomNumber)
+        # seperate room number into block and id
+        # find sublisting
+        roomDataTuple = getroomid(i.roomNumber)
+        print(roomDataTuple)
+        room = SubListing.query.filter_by(name=i.roomNumber, listingSlug=superListing).first()
+        print("Room", room)
+        if room != None:
+        # reduce bedTakenCountBy1
+            room.bedsTaken =+ 1
+            db.session.commit()
+    return "Done"
+    
+
 @app.route('/updateRoomCount/<string:superListing>')
 def updateRoomCount(superListing):
+
+    # Updates the subisting data
     sublistings = SubListing.query.filter_by(superListing=superListing).all()
     for i in sublistings:
         print(i.bedsAvailable, i.bedsTaken, i.status)
@@ -1658,9 +1922,7 @@ def login():
     return render_template('login.html', form=form)
 
 @app.route('/dashboard', methods=['GET', 'POST'])
-
 def dashboard():
-
     # listing = getListing(current_user.listing)
     listing = Listing.query.get_or_404(1)
     activeUsers = User.query.filter_by(listingSlug = listing.slug).count()
@@ -1697,6 +1959,12 @@ def dashboard():
 
     weekTransactions = db.session.query(func.date(Transactions.date_created), func.sum(Transactions.amount)).filter(Transactions.paid == True, Transactions.appId == listing.slug, func.date(Transactions.date_created) > datetime.datetime.today() - datetime.timedelta(weeks=1) ).group_by(func.date(Transactions.date_created)).all()
 
+    approvedrefund = Refund.query.filter_by(listingSlug=current_user.listingSlug,financeApprove=True, adminApprove=True).count()
+    pendingrefund = Refund.query.filter_by(listingSlug=current_user.listingSlug).count()
+
+    tenancyperiods = TenancyPeriod.query.filter_by(listingSlug=current_user.listingSlug, active=True).count()
+    past_due_tenancy_periods = 0
+    
     dates = []
     amount = []
 
@@ -1722,6 +1990,7 @@ def dashboard():
 
     print(str(maxAmount) + " - " + str(minAmount))
 
+
     data = {
         "tenants":contacts,
         "rooms":sublistings,
@@ -1730,7 +1999,11 @@ def dashboard():
         "maxAmount":maxAmount,
         "minAmount":minAmount,
         "debtors":7,
-        "roomsOccupied":7
+        "roomsOccupied":7,
+        "pending_refunds":pendingrefund,
+        "approved_refunds":approvedrefund,
+        "tenancy_periods":tenancyperiods,
+        "past_due_tenancy_periods":past_due_tenancy_periods
     }
 
     pprint.pprint(data)
@@ -1789,10 +2062,10 @@ def upload(listingSlug, dataType = None):
 
 @app.route('/alltransactions', methods=['GET', 'POST'])
 def alltransactions():
-
-    transactions = Transactions.query.filter_by(appId="cuoldgirls").order_by(Transactions.id.desc()).all()
+    user = current_user
+    transactions = Transactions.query.filter_by(appId=user.listingSlug).order_by(Transactions.id.desc()).all()
     print(transactions)
-    return render_template('alltransactions.html', transactions=transactions)
+    return render_template('alltransactions.html', transactions=transactions,user=None)
 
 
 @app.route('/transactions/<int:userId>', methods=['GET', 'POST'])
@@ -1939,6 +2212,8 @@ def profile(id=None):
     return render_template('profile.html', user=user, form=form, listing=getListing(1))
     # else:
     #     return render_template('404.html', message = "The user you chose cant be found")
+
+
 
 
 

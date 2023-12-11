@@ -37,6 +37,18 @@ a{
     transition: width 2s;
 }
 
+.pill-button-danger{
+    background-color: red;
+    border: none;
+    color: white;
+    border-radius:10px ;
+    padding: 16px 22px;
+    box-shadow: 0 2px 8px 0 rgba(48, 44, 255, 0.1);
+    text-align: center;
+    font-weight: bold;
+    transition: width 2s;
+}
+
 .pill-option{
     background-color: #302cff;
     border: none;
