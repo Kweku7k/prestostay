@@ -151,6 +151,7 @@ class SubListing(db.Model):
     listingId = db.Column(db.String)
     occupants = db.Column(db.Integer) #bedsAvailable
     quantity = db.Column(db.Integer, default=0)
+    vacantSpace = db.Column(db.Integer, default=0)
     divideCost = db.Column(db.Boolean, default=True)
     superListing = db.Column(db.String)
     chatId = db.Column(db.String)
@@ -742,7 +743,6 @@ def uploadData(filename, format=False):
             print(row)
 
             if row.get('Number'):
-
                 try:
                     emailThingy = random.sample(range(1, 7000 + 1), 1)[0]
                     user = User(username = row["Name"], password = "0000",email = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+str(emailThingy)+"@prestoghana.com", phone = row["Number"], indexNumber=row["Index Number"], listing=row["Listing"], paid=convertToNumber(row["Paid"]), roomNumber=row["Room Number"], fullAmount=convertToNumber(row["Full Amount"]), balance=convertToNumber(row["Balance"]), listingSlug=row["listingSlug"] )
@@ -752,7 +752,6 @@ def uploadData(filename, format=False):
                     print(e)
 
                 db.session.commit()
-                    
     return message
 
 def uploadRoomData(filename, listing, format=False):
@@ -767,20 +766,48 @@ def uploadRoomData(filename, listing, format=False):
 
     with open(csv_file_path, 'r', newline='') as csvfile:
         csv_reader = csv.DictReader(csvfile)
+
+        # first_10_rows = list(csv_reader)[:30]
         
         for row in csv_reader:
             print(row)
+            sublistingName = row["Room Number"]
+            foundSubListing = SubListing.query.filter_by(name=sublistingName).first()
 
-            try:
-                sublisting = SubListing(name = row["Name"], block=row["Block"], roomId=row["RoomId"], bedsAvailable=row["Beds Available"], bedsTaken = row["Beds Taken"], location = row["Location"], size=row["Size"], status = row["Vacancy Status"], pricePerBed=row["Price per bed"], price=row["Price"], listingId=row["Listing Id"], superListing=row["Super Listing"] )
-                db.session.add(sublisting)
+            print("---------------")
+            print(foundSubListing)
+            print("---------------")
 
-            except Exception as e:
-                message = "There seems to have been an issue with the upload"
-                errormessage = e
-                print(errormessage)
 
-            db.session.commit()
+            if foundSubListing == None:
+                block = sublistingName[0]
+                roomId=sublistingName.replace(block, '')
+                try:
+                    occupants = 1 if row["Vacant"] == 'FALSE' else 0
+                    # sublisting = SubListing(name = row["Name"], block=row["Block"], roomId=row["RoomId"], bedsAvailable=row["Beds Available"], bedsTaken = row["Beds Taken"], location = row["Location"], size=row["Size"], status = row["Vacancy Status"], pricePerBed=row["Price per bed"], price=row["Price"], listingId=row["Listing Id"], superListing=row["Super Listing"] )
+                    sublisting = SubListing(name = row["Room Number"], block=block, roomId=roomId, bedsAvailable=1, bedsTaken = 1, quantity=1, occupants=occupants, location = row["Location"], size=row["Size"], status = True, pricePerBed=convertToNumber(row["PricePerBed"]), price=convertToNumber(row["Price"]), listingId=listing.id, superListing=listing.slug )
+                    db.session.add(sublisting)
+                    db.session.commit()
+
+
+                except Exception as e:
+                    message = "There seems to have been an issue with the upload"
+                    errormessage = e
+                    print(errormessage)
+            else:
+                try:
+                    foundSubListing.quantity += 1
+                    if row["Vacant"] == 'FALSE':
+                        foundSubListing.occupants += 1
+                    else:
+                        foundSubListing.vacantSpace += 1
+                    db.session.commit()
+                except Exception as e:
+                    print("---------------")
+                    print(errormessage)
+                    print("---------------")
+
+            
             
     return message
 
@@ -1180,7 +1207,8 @@ def register(organisationslug = None):
 
                 user = User.query.filter_by(email=form.email.data).first()
 
-                return redirect(url_for('pay', userId=user.id))
+                # return redirect(url_for('pay', userId=user.id))
+                return redirect(url_for('sublisting', userId=user.id))
         else:
             print(form.errors)
     return render_template('register.html', organisation=organisation,welcomeDescription=welcomeDescription, form=form, title=title, welcomeMessage=welcomeMessage)
@@ -1468,6 +1496,19 @@ def period(id=None):
             form.endDate.data = period.end_date
             # form.submit = 'Update!'
     return render_template('period.html', form=form, rooms=rooms, listing=listing)
+
+
+@app.route('/reserved', methods=['GET', 'POST'])
+@login_required
+def reserved():
+    form = SearchForm()
+    # view all periods
+    # what happens when a search is successful!
+    listing = getListing(current_user)
+    print(listing)
+    periods = TenancyPeriod.query.filter_by(listingSlug=current_user.listingSlug).all()
+    print(periods)
+    return render_template('reserved.html', form=form,periods=periods, listing=listing)
 
 @app.route('/findrefund/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -1766,10 +1807,6 @@ def sublisting(userId):
                     sublistings = [listing for listing in sublistings if listing.bedsAvailable == sublistingform.bedsAvailable.data[0]]
                 if sublistingform.size.data != 'All Sizes':
                     sublistings = [listing for listing in sublistings if listing.size == sublistingform.size.data]
-
-
-                    
-
                     # check to see if the value is not None
 
                 print(sublistings)
@@ -1813,7 +1850,7 @@ def sublisting(userId):
 @app.route('/mysublistings', methods=['GET', 'POST'])
 def mysublistings():
     listing = getListing(1)
-    sublistings = SubListing.query.filter_by(superListing=listing.slug).all()
+    sublistings = SubListing.query.filter_by(superListing=listing.slug).order_by(SubListing.name.asc()).all()
     return render_template('mysublistings.html',sublistings=sublistings, listing=listing,user=None)
 
 
@@ -1990,7 +2027,6 @@ def dashboard():
 
     print(str(maxAmount) + " - " + str(minAmount))
 
-
     data = {
         "tenants":contacts,
         "rooms":sublistings,
@@ -2046,14 +2082,15 @@ def upload(listingSlug, dataType = None):
             message = uploadTransactions(save_path)
 
         elif dataType == "users":
-            newdatapath = getOccupants(save_path, listing)
-            message = uploadData(newdatapath, True)
+            # newdatapath = getOccupants(save_path, listing)
+            message = uploadData(save_path, True)
 
         elif dataType == "rooms":
-            folder = create_folder(os.path.join(app.root_path,listing.slug))    
-            writepath = os.path.join(app.root_path,folder, f'rooms-{timestamp}.csv')  # Replace "path_to_save" with your desired path
-            newdatapath = createRooms(save_path, writepath, listing)
-            message = uploadRoomData(newdatapath, listing, True)
+            # folder = create_folder(os.path.join(app.root_path,listing.slug))    
+            # writepath = os.path.join(app.root_path,folder, f'rooms-{timestamp}.csv')  # Replace "path_to_save" with your desired path
+            # newdatapath = createRooms(save_path, writepath, listing)
+            message = uploadRoomData(save_path, listing, True)
+
             return message
         
         return redirect(url_for('dashboard'))
