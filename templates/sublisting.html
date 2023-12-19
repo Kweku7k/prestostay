@@ -83,9 +83,11 @@
 <div class="row">
 
     {% for listing in sublistings %}
+    {% if listing.quantity | int - listing.occupants | int > 0 %}
+    
     
     <div class="col-md-3">
-        <a href="#" style="text-decoration: none; color: black;">
+        <a href="{{url_for('updateSubListing', userId=user.id, subListingId=listing.id)}}" style="text-decoration: none; color: black;">
             <div data-aos="fade-up" class="card">
                 <div style="display: flex; justify-content: space-between;">
                     <h6>{{listing.name}}</h6>
@@ -95,15 +97,15 @@
 
                 </div>
                 <h2 style="font-weight: 700;">GHS {{listing.pricePerBed}}</h2>
-                <h6 class="text-muted"> {{listing.bedsAvailable }} in a room - {{listing.location}}</h6>
+                <h6 class="text-muted"> {{listing.quantity }} in a room - {{listing.location}}</h6>
                 <div style="display: flex; align-items: center; ">
                     <div style="width: 10px; height: 10px; background-color: green; border-radius: 50%; margin-right: 10px;"></div>
-                    <h6 class="text-muted" style="margin: 0;">{{listing.bedsAvailable | int - listing.bedsTaken | int}} beds available</h6>
+                    <h6 class="text-muted" style="margin: 0;">{{listing.quantity | int - listing.occupants | int}} beds available</h6>
                 </div>
-
             </div>
         </a>
     </div> 
+    {% endif %}
 
     {% endfor %}
 
@@ -112,13 +114,8 @@
             <button class="pill-button" data-bs-toggle="modal" data-bs-target="#exampleModal" >🔍 Search for sublisting</button>
             <h6 class="text-muted" style="text-align: center;">{{message}}</h6>
         </div>
-
     </div>
-
-
-    
 </div>
-
 </div>
 
 

@@ -20,7 +20,14 @@
                     {% endif %}
 
                     <h1 class="heading" style="text-align: center; margin-top: 5vh;">{{user.username}}</h1>
-                    <h6 style="text-align: center; width: 100%; " class="text-muted">{{listing.name}} </h6>   
+                    <h6 style="text-align: center; width: 100%; " class="text-muted">Listing - {{listing.name}}</h6>   
+                    {% if user.roomNumber %}
+                    
+                    <h6 style="text-align: center; width: 100%; " class="text-muted">RoomNumber - {{user.roomNumber}}</h6>   
+                    {% else %}
+                    <h6 style="text-align: center; width: 100%; color: red;">UNASSIGNED</h6>   
+                    
+                    {% endif %}
                     <h6 style="text-align: center; width: 100%; ">{{user.phone}} </h6>   
                     
                     <br/>
@@ -45,9 +52,16 @@
                             </a>
                         </div>
                         <div class="col">
-                            <a href="{{url_for('maps')}}">
+                            {% if user.roomNumber%}
+                            <a href="{{url_for('unassign', userId=user.id)}}">
                                 <button class="pill-button-danger full">Unassign</button>
                             </a>
+                            {% else %}
+                            <a href="{{url_for('sublisting', userId=user.id)}}">
+                                <button class="pill-button full">Assign</button>
+                            </a>
+
+                            {% endif %}
                         </div>
                 </div>
 
@@ -83,13 +97,13 @@
                         </div> -->
 
 
-                        <div class="inputTextHolder">
+                        <!-- <div class="inputTextHolder">
                             <h6>{{form.roomNumber.label}}</h6>
                             {{form.roomNumber (class="inputTextCard", placeholder="Which room are you assigned to")}}
                             {% for error in form.roomNumber.errors %}
                             <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                             {% endfor %}
-                        </div>
+                        </div> -->
 
 
                         <div class="inputTextHolder">

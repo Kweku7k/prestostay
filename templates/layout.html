@@ -46,15 +46,15 @@
             <h4 style="font-weight: 900; color: #302cff;">PrestoStay</h4>
           </a>
           <div>
-            {% if current_user.is_authenticated %}
+            <!-- {% if current_user.is_authenticated %} -->
             <a href="{{url_for('dashboard')}}"> 
               <button class="pill-button" onclick="showLoadingScreen()">Dashboard</button>
             </a>
-            {% else %}
+            <!-- {% else %}
             <a href="{{url_for('findme')}}"> 
               <button class="pill-button" onclick="showLoadingScreen()">Dashboard</button>
             </a>
-            {% endif %}
+            {% endif %} -->
         </div>
         </nav>
         <hr style="width: 95%; margin: auto;">

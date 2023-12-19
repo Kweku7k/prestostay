@@ -313,6 +313,7 @@ class LedgerEntry(db.Model):
 
 def reportError(e):
     print(e)
+    sendTelegram(e)
     pass
 
 def getListing(id):
@@ -753,6 +754,11 @@ def uploadData(filename, format=False):
 
                 db.session.commit()
     return message
+
+def logger(param):
+    print(param)
+    sendTelegram(param)
+    return "Successful"
 
 def uploadRoomData(filename, listing, format=False):
     csv_file_path = filename  # Replace with the path to your CSV file
@@ -1615,11 +1621,17 @@ def createSubListingSlugs(listingSlug):
         db.session.commit()
     return "Done."
 
-@app.route('/updateSubListing/<int:userId>/<string:subListingSlug>', methods=['GET', 'POST'])
-def updateSubListing(userId, subListingSlug):
+@app.route('/updateSubListing/<int:userId>/<int:subListingId>', methods=['GET', 'POST'])
+def updateSubListing(userId, subListingId):
 
     user = User.query.get_or_404(userId)
-    sublisting = SubListing.query.filter_by(slug=subListingSlug).first()
+    if user.roomNumber is not None:
+        flash(f'Please unassign this user before reassigning.')
+        return redirect(url_for('profile', id=user.id))
+    print(user)
+    sublisting = SubListing.query.get_or_404(subListingId)
+    print(sublisting)
+    # sublisting = SubListing.query.filter_by(slug=subListingId).first()
     
     if user == None:
         flash(f'No user was found')
@@ -1629,27 +1641,28 @@ def updateSubListing(userId, subListingSlug):
         print('There was no sublisting with this slug')
 
     try:
-        user.sublistingSlug = subListingSlug
+        user.sublisting = sublisting.id
         user.fullAmount += float(sublisting.pricePerBed)
         user.roomNumber = sublisting.name
 
         # Confirming it will not show here more when unvacant
-        sublisting.bedsTaken = int(sublisting.bedsTaken) + 1
-        if user.roomNumber:
-            pass
+        sublisting.occupants = sublisting.occupants + 1
             # find the room and set the occupancy minus one
-        if int(sublisting.bedsTaken) == int(sublisting.bedsAvailable):
+        if sublisting.occupants == sublisting.quantity:
             sublisting.vacant = False
         else:
             sublisting.vacant = True
         db.session.commit()
+
+        sendTelegram("Sublisting: "+ sublisting.name +" has been updated to: \nOccupants:"+ str(sublisting.occupants))
+
     except Exception as e:
         print(e)
         reportError(e)
 
-    updateBalance()
+    updateBalance(user.id)
 
-    return redirect(url_for('pay',userId=user.id))
+    return redirect(url_for('profile',id=user.id))
 
 def aggregateValues(value):
     distinct_values = db.session.query(SubListing.value).distinct().all()
@@ -1778,7 +1791,7 @@ def sublisting(userId):
     print(user)
     print("listing", listing)
     form = ListingForm()
-    sublistings = SubListing.query.filter_by(superListing=user.listing, vacant=True).all()
+    sublistings = SubListing.query.filter_by(superListing=user.listing, vacant=True).order_by(SubListing.name.asc()).all()
     # print(sublistings)
     print(user.sublisting)    
     
@@ -1853,6 +1866,28 @@ def mysublistings():
     sublistings = SubListing.query.filter_by(superListing=listing.slug).order_by(SubListing.name.asc()).all()
     return render_template('mysublistings.html',sublistings=sublistings, listing=listing,user=None)
 
+@app.route('/unassign/<int:userId>', methods=['GET', 'POST'])
+def unassign(userId):
+    print(userId)
+    user = User.query.get_or_404(userId)
+    room = SubListing.query.filter_by(name=user.roomNumber).first()
+    logger("Attempting to unassign "+user.username+" from "+room.name)
+
+    try:
+        # remove one occupant from room
+        room.occupants =- 1
+        # remove room number from occupant
+        user.roomNumber = None
+        user.fullAmount = 0
+        # Set status to unassigned.
+        user.status = "Unassigned"
+        db.session.commit()
+        logger("SUCCESSFUL: \nUnassigning "+user.username+" from "+room.name)
+
+    except Exception as e:
+        reportError(e)
+    return redirect(url_for('profile', id=user.id))
+    
 
 @app.route('/transaction/<int:transactionId>', methods=['GET', 'POST'])
 def transaction(transactionId): 
@@ -2149,26 +2184,24 @@ def resendsms(id):
 
 
 
-@app.route('/updateBalance', methods=['GET', 'POST'])
-def updateBalance():
+@app.route('/updateBalance/<int:userId>', methods=['GET', 'POST'])
+def updateBalance(userId):
     listing = Listing.query.get_or_404(1)
+    print(listing)
 
     expectedRevenue = 0
     amountRecieved = 0
 
-    for i in User.query.filter_by(listingSlug=listing.slug).all():
-        print(i)
-        i.balance = i.fullAmount - i.paid
+    # for i in User.query.filter_by(listingSlug=listing.slug).all():
+    user = User.query.get_or_404(userId)
+    print(user)
+    print("FullAmount:",user.fullAmount)
+    print("PaidAmount:",user.paid)
+    user.balance = user.fullAmount - user.paid
+    db.session.commit()        
 
-        amountRecieved += i.paid
-        expectedRevenue += i.fullAmount
-
-    # Ledger entry
-
-    listing.amountRecieved = amountRecieved
-    listing.expectedRevenue = expectedRevenue
-
-
+    # listing.amountRecieved = amountRecieved
+    # listing.expectedRevenue = expectedRevenue
 
     db.session.commit()
 
