@@ -904,9 +904,9 @@ def issue(appId=None):
                     # if form.email.data:
                     #     sendMail(form.email.data,'Your feedback has been recieved', message )
                     
-                    # if form.phoneNumber.data is not None:
-                    #     smsmessage = 'Hi '+newFeedback.name+', \n Your issue has been raised and is being resolved. Someone from support will reach out if neccessary. Thank You.'
-                    #     sendsms(newFeedback.sender, smsmessage, '/newfeedback')
+                    if form.phoneNumber.data is not None:
+                        smsmessage = 'Hi '+newFeedback.name+', \n Your issue has been raised and is being resolved. Someone from support will reach out if neccessary. Thank You.'
+                        sendsms(newFeedback.sender, smsmessage, '/newfeedback')
                     pass
                 if appId is not None:
                     return redirect(url_for('paymentMethod', username=appId))
@@ -1242,6 +1242,16 @@ def onboard(organisationslug):
         #     flash(error)
 
     return render_template('onboard.html', form=form, title="Onboard New User")
+
+
+# Logic to validate room against tenats data
+# pick one room
+# look for users in that room
+# confirm occupant count == Room Count
+# confirm room price == user.fullAmount
+# 
+
+
 
 
 @app.route('/register/<string:organisationslug>', methods=(['POST','GET']))
