@@ -1182,9 +1182,15 @@ def getallrefunds(status="all", search=None):
     return render_template('allrefunds.html', refunds=refunds, form=form,listing=listing, status=status)
 
 @app.route('/onboard', methods=(['POST','GET']))
-def onboard():
+@app.route('/onboard/<string:organisationslug>', methods=(['POST','GET']))
+def onboard(organisationslug):
     form = OnboardForm()
-    form.listing.choices = [(listing.slug, listing.name) for listing in Listing.query.all()]
+
+    if organisationslug is not None:
+        listing =  Listing.query.filter_by(slug=organisationslug).first()
+        form.listing.choices = [(listing.slug, listing.name)]
+    else:
+        form.listing.choices = [(listing.slug, listing.name) for listing in Listing.query.all()]
     form.password.data = '000000'
     
     if current_user:
@@ -1945,6 +1951,7 @@ def mysublistings():
     return render_template('mysublistings.html',sublistings=sublistings, listing=listing,user=None)
 
 @app.route('/unassign/<int:userId>', methods=['GET', 'POST'])
+@login_required
 def unassign(userId):
     print(userId)
     user = User.query.get_or_404(userId)
