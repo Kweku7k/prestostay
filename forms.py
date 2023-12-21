@@ -85,6 +85,20 @@ class SearchForm(FlaskForm):
     submit = SubmitField('Search')
 
 
+
+class FeedbackForm(FlaskForm):
+    name = StringField('Name')
+    title = StringField('Title')
+    issue = StringField('Description', widget=TextArea(), validators=[DataRequired()])
+    
+    email = StringField('Email')
+    phoneNumber = StringField('Phone Number')
+    description = StringField('Your Feedback')
+
+    info = StringField('Extra Information')
+    submit = SubmitField('Report!')
+
+
 class ListingForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     email = EmailField('Name', validators=[DataRequired()])

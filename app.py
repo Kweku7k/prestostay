@@ -27,6 +27,8 @@ bcrypt = Bcrypt(app)
 sandboxDb = "postgresql://postgres:adumatta@database-1.crebgu8kjb7o.eu-north-1.rds.amazonaws.com:5432/staysandbox"
 app.config['SECRET_KEY'] = 'c280ba2428b2157916b13s5e0c676dfde'
 app.config['SQLALCHEMY_DATABASE_URI']= sandboxDb
+googlerecaptchakey = "6LeVvCEpAAAAAJpamR_cN4meMFiMbuLO32Z3wrUu"
+
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -67,6 +69,27 @@ class Suggestions(db.Model):
     def __repr__(self):
         return f"Suggestion('id: {self.id}', 'suggestion:{self.suggestion}', 'slug:{self.slug}')"
   
+
+
+
+class Feedback(db.Model):
+    tablename = ['Feedback']
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    appId = db.Column(db.String)
+    sender = db.Column(db.String)
+    title = db.Column(db.String)
+    message = db.Column(db.String)
+    emailAddress = db.Column(db.String)
+    date_created = db.Column(db.DateTime, default=datetime.datetime.utcnow())
+    date_resolved = db.Column(db.DateTime)
+    resolved = db.Column(db.Boolean, default = False)
+
+    def __repr__(self):
+        return f"Feedback('id: {self.id}', 'Name:{self.name}', 'Phone:{self.sender}' , 'Resolved:{self.resolved}')"
+
+
 
 class Refund(db.Model):
     tablename = ['Refund']
@@ -846,6 +869,67 @@ def internal_server_error(error):
 
 # ----- ROUTES
 
+@app.route('/issue', methods=['GET', 'POST'])
+@app.route('/issue/<string:appId>', methods=['GET', 'POST'])
+def issue(appId=None):
+    form = FeedbackForm()
+
+    if request.method == 'POST':
+        print(request.form)
+        recaptcha_response = request.form['g-recaptcha-response']
+
+         # Verify the reCAPTCHA response
+        verify_url = f'https://www.google.com/recaptcha/api/siteverify?secret={googlerecaptchakey}&response={recaptcha_response}'
+        verify_response = requests.post(verify_url)
+        verify_data = verify_response.json()
+
+        if verify_data['success']:
+            
+            print("This is a post request")
+            if form.validate_on_submit():
+                print("Form has been validated")
+                
+                print(form.data)
+                sendTelegram(f'New Feedback recieved. {json.dumps(form.data)}')
+
+                try:
+                    newFeedback = Feedback(sender=form.phoneNumber.data, title=form.title.data, message=form.issue.data, emailAddress=form.email.data, name=form.name.data, appId=appId)
+                    db.session.add(newFeedback)
+                    db.session.commit()
+                except Exception as e:
+                    print(e)
+
+                if newFeedback is not None:
+                    # message = 'Hi '+newFeedback.name+', <br/> Your issue has been raised and is being resolved. Someone from support will reach out if neccessary. Thank You. <br/> <br/> Powered By PrestoGhana'
+                    # if form.email.data:
+                    #     sendMail(form.email.data,'Your feedback has been recieved', message )
+                    
+                    # if form.phoneNumber.data is not None:
+                    #     smsmessage = 'Hi '+newFeedback.name+', \n Your issue has been raised and is being resolved. Someone from support will reach out if neccessary. Thank You.'
+                    #     sendsms(newFeedback.sender, smsmessage, '/newfeedback')
+                    pass
+                if appId is not None:
+                    return redirect(url_for('paymentMethod', username=appId))
+                else:
+                    return render_template('feedback.html', title="Thank You For Your Feedback ", description ="Your feedback has been recieved and is being reviewed! If need be someone ")
+            
+            else:
+                print(form.errors)
+                return "Form submitted successfully!"
+        else:
+            # Handle reCAPTCHA verification failure
+            flash(f'reCAPTCHA verification failed. Please try again.')
+
+            # return "reCAPTCHA verification failed. Please try again."
+        
+    return render_template('issue.html', form=form)
+    
+    
+    # if downloaded.status_code == 200:
+    #     print("Yes")
+    # return render_template('feedback.html', title="CSV Exported" ,description="Please check your downloads for the exported csv." )
+        
+
 
 @app.route('/find',methods=['GET','POST'])
 def index():
@@ -1040,7 +1124,7 @@ def getallusers(status="all", search=None):
     print(current_user)
     listing = getListing(current_user.listing)
     minimum = 700
-    users = User.query.filter_by(listingSlug=listing.slug).all()
+    users = User.query.filter_by(listingSlug=listing.slug).order_by(User.username.asc()).all()
 
     if request.method == 'POST':
         search=form.search.data
@@ -1787,11 +1871,11 @@ def sublisting(userId):
     message = 'You have reached the end of this list.'
 
     user = User.query.get_or_404(userId)
-    listing = Listing.query.filter_by(slug=user.listing).first()
+    listing = Listing.query.filter_by(slug=user.listingSlug).first()
     print(user)
     print("listing", listing)
     form = ListingForm()
-    sublistings = SubListing.query.filter_by(superListing=user.listing, vacant=True).order_by(SubListing.name.asc()).all()
+    sublistings = SubListing.query.filter_by(superListing=user.listingSlug, vacant=True).order_by(SubListing.name.asc()).all()
     # print(sublistings)
     print(user.sublisting)    
     
@@ -1824,12 +1908,6 @@ def sublisting(userId):
 
                 print(sublistings)
 
-                # sublistingsData = SubListing.query.filter(SubListing.location != 'Terrace')
-
-
-                # print(sublistingsData)
-
-                # sublistings = sublistingsData.all()
                 if len(sublistings) == 0:
                     message = 'Unfortunately, there were no listings found. Please try to search again.'
             except Exception as e:
@@ -1875,7 +1953,7 @@ def unassign(userId):
 
     try:
         # remove one occupant from room
-        room.occupants =- 1
+        room.occupants -= 1
         # remove room number from occupant
         user.roomNumber = None
         user.fullAmount = 0
@@ -2182,9 +2260,15 @@ def resendsms(id):
     return redirect(url_for('upload'))
 
 
+@app.route('/updateAllRooms/<string:listingSlug>', methods=['GET', 'POST'])
+def updateAllUsersInSubListing(listingSlug):
+    for i in User.query.filter_by(listingSlug=listingSlug, role="user").all():
+        print(i)
+        updateBalance(i.id)
+    return "Done"
 
 
-@app.route('/updateBalance/<int:userId>', methods=['GET', 'POST'])
+# @app.route('/updateBalance/<int:userId>', methods=['GET', 'POST'])
 def updateBalance(userId):
     listing = Listing.query.get_or_404(1)
     print(listing)
@@ -2192,18 +2276,27 @@ def updateBalance(userId):
     expectedRevenue = 0
     amountRecieved = 0
 
-    # for i in User.query.filter_by(listingSlug=listing.slug).all():
     user = User.query.get_or_404(userId)
-    print(user)
-    print("FullAmount:",user.fullAmount)
-    print("PaidAmount:",user.paid)
-    user.balance = user.fullAmount - user.paid
-    db.session.commit()        
+    room = SubListing.query.filter_by(name = user.roomNumber).first()
+
+    if room is not None:
+        user.fullAmount = room.price
+        user.balance = user.fullAmount - user.paid
+        print(user)
+        print("Room Name:",room.name, "Price:",room.price)
+        print("FullAmount:",user.fullAmount)
+        print("PaidAmount:",user.paid)
+        db.session.commit()   
+    else:
+        print("_________________")
+        print("USER:",user.username,"ISNT ASSIGNED A ROOM!")
+        print("_________________")
+        
 
     # listing.amountRecieved = amountRecieved
     # listing.expectedRevenue = expectedRevenue
 
-    db.session.commit()
+    # db.session.commit()
 
     flash(f'Data has been updated!')
     return redirect(url_for('dashboard'))
@@ -2234,17 +2327,18 @@ def profile(id=None):
                     print(form.data)
                     try:
                         user.username = form.username.data
-                        user.listing = form.listing.data
+                        # user.listing = form.listing.data
                         user.balance = form.balance.data
-                        user.paid = form.paid.data
-                        user.roomNumber = form.roomNumber.data
+                        # user.paid = form.paid.data
+                        # user.roomNumber = form.roomNumber.data
                         user.phone = form.phone.data
                         user.indexNumber = form.indexNumber.data
-                        user.fullAmount = form.fullAmount.data
+                        # user.fullAmount = form.fullAmount.data
                         user.email = form.email.data
                         db.session.commit()
 
-                        updateUserProfileBalance(id)
+                        # updateUserProfileBalance(id)
+                        updateBalance(id)
 
                         flash(f'' + user.username+' has been updated successfully')
                         return redirect(url_for('getallusers'))
