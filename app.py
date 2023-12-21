@@ -906,7 +906,8 @@ def issue(appId=None):
                     
                     if form.phoneNumber.data is not None:
                         smsmessage = 'Hi '+newFeedback.name+', \n Your issue has been raised and is being resolved. Someone from support will reach out if neccessary. Thank You.'
-                        sendsms(newFeedback.sender, smsmessage, '/newfeedback')
+                        send_sms(newFeedback.sender, smsmessage)
+
                     pass
                 if appId is not None:
                     return redirect(url_for('paymentMethod', username=appId))
