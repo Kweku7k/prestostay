@@ -1,5 +1,6 @@
 from email.message import EmailMessage
 import os
+import pprint
 import smtplib
 import urllib.request, urllib.parse
 import urllib
@@ -154,6 +155,27 @@ def send_sms(phone,message):
     content = urllib.request.urlopen(url).read()
     print(content)
     print(url)
+
+import requests
+
+def sendMnotifySms(sender_id, recipients, message):
+    endPoint = 'https://api.mnotify.com/api/sms/quick'
+    api_key = "whmBov51IDjkTtj6AAWmakuid9NljoRPFdr4Jx6rbqM4T" #Remember to put your own API Key here
+    data = {
+    'recipient[]': recipients,
+    'sender': sender_id,
+    'message': message,
+    'is_schedule': False,
+    'schedule_date': ''
+    }
+    url = endPoint + '?key=' + api_key
+    response = requests.post(url, data)
+    data = response.json()
+    pprint.pprint(data)
+    return data
+    
+
+
 
 
 # def payWithPrestoPay(candidate, amount, phone, network, channel, costPerVote):

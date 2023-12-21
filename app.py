@@ -12,7 +12,7 @@ from sqlalchemy import Enum, func
 from itsdangerous import Serializer
 from flask_bcrypt import Bcrypt
 from dataprocessing import convertToNumber, createRooms, getOccupants
-from utils import apiResponse, create_folder, send_sms, sendAnEmail, sendTelegram, sendVendorTelegram, reportTelegram  
+from utils import apiResponse, create_folder, send_sms, sendAnEmail, sendMnotifySms, sendTelegram, sendVendorTelegram, reportTelegram  
 from forms import *
 import pprint
 import time
@@ -1411,21 +1411,27 @@ def recpay(organisationSlug = None):
         "name":"Make A Recurring Payment",
         "logo":"https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.vecteezy.com%2Ffree-vector%2Fchurch-logo&psig=AOvVaw3QF9tq4rKcoxDOshWhwYzl&ust=1696564331488000&source=images&cd=vfe&ved=0CBEQjRxqFwoTCPix9eOA3oEDFQAAAAAdAAAAABAE"
     }
-    if form.validate_on_submit():
-        phoneNumber = form.phone.data.replace(" ", "")[-9:] 
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            phoneNumber = form.phone.data.replace(" ", "")[-9:] 
 
-        print("phoneNumber")
-        print(phoneNumber)
+            sendTelegram("Attempting to find: "+phoneNumber)
 
-        listing = Listing.query.filter_by(name=form.organisation.data).first()
-        user = User.query.filter(User.phone.endswith(phoneNumber), User.listingSlug==listing.slug).first()
-        
-        print(user)
-        if user is None:
-            flash(f'We couldnt find anyone with this phone number in '+listing.name+' please check and try again.')
-            return redirect(url_for('recpay', organisationSlug=organisationSlug))
-        
-        return redirect(url_for('pay', userId=user.id))
+            print("phoneNumber")
+            print(phoneNumber)
+
+            listing = Listing.query.filter_by(name=form.organisation.data).first()
+            user = User.query.filter(User.phone.endswith(phoneNumber), User.listingSlug==listing.slug).first()
+            
+            print(user)
+
+            if user is None:
+                flash(f'We couldnt find anyone with this phone number in '+listing.name+' please check and try again.')
+                sendTelegram("Couldnt find: "+user.username)
+                return redirect(url_for('recpay', organisationSlug=organisationSlug))
+            else:
+                sendTelegram("Found: "+user.username)
+            return redirect(url_for('pay', userId=user.id))
     return render_template('recpay.html', current_user=None, loadingMessage=loadingMessage, form=form, user=tempUserBody)
 
 
@@ -1700,12 +1706,14 @@ def broadcast():
         app.logger.info("form.csrf_token.data")
         app.logger.info(form.csrf_token.data)
         message = form.message.data
-        message += "\n \nPowered By PrestoGhana"
+        message += "\n \nPowered By PrestoStay"
         app.logger.info(message)
+
+        sendMnotifySms('CUOLDGIRLS',['0545977791', '0502976567'], message)
         # app.logger.info(contacts)
         # for contact in contacts:
         #     send_sms(contact, message, "PrestoVotes")
-        flash(str(numberOfContacts) + ' messages to ' + form.group.data + 'has not been approved.')
+        flash(str(numberOfContacts) + ' messages to ' + form.group.data + 'has been sent!.')
         return redirect(url_for('dashboard'))
 
     return render_template('broadcast.html',  contacts=contacts, numberOfContacts=numberOfContacts, form=form, loadingMessage=loadingMessage, listing=listing)
