@@ -1697,6 +1697,9 @@ def broadcast():
 
     contacts = User.query.filter_by(listingSlug=listing.slug).all()
     numberOfContacts = User.query.filter_by(listingSlug=listing.slug).count()
+
+    allcontacts = [contact.phone for contact in contacts]
+    print(allcontacts)
     
     app.logger.info(session)
 
@@ -1709,7 +1712,7 @@ def broadcast():
         message += "\n \nPowered By PrestoStay"
         app.logger.info(message)
 
-        sendMnotifySms('CUOLDGIRLS',['0545977791', '0502976567'], message)
+        sendMnotifySms('CUOLDGIRLS',['0545977791'], message)
         # app.logger.info(contacts)
         # for contact in contacts:
         #     send_sms(contact, message, "PrestoVotes")
