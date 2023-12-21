@@ -1712,7 +1712,9 @@ def broadcast():
         message += "\n \nPowered By PrestoStay"
         app.logger.info(message)
 
-        sendMnotifySms('CUOLDGIRLS',['0545977791'], message)
+        smsresponse = sendMnotifySms('CUOLDGIRLS',allcontacts, message)
+        sendTelegram(smsresponse)
+
         # app.logger.info(contacts)
         # for contact in contacts:
         #     send_sms(contact, message, "PrestoVotes")
@@ -2046,12 +2048,12 @@ def confirm(transactionId):
             if entry != None: #If a vote was created
                 # message = "You have successfully bought " + str(entry.amount) + " vote(s) for " + transaction.username + "\n TransactionID: " + str(transaction.id)+"PRS"+str(transaction.ref) + "\n \n Powered By PrestoStay"
                 
-                if listing.slug == 'prontohostel':
-                    responseMessage = transaction.listing + "\nSuccessfully bought " +str(transaction.amount) + " for " + str(transaction.username) + "." + "\nBefore: " + str(transaction.balanceBefore) + "\nAfter: "+ str(transaction.balanceAfter) + "\nTransactionId:" + str(transaction.id) + "\nAccount:" + str(transaction.network) + " : "+ str(transaction.account) + "\nLedgerId: " + str(entry.id)
-                    message = "Student Name:"+ str(transaction.username) + "\nHostel Name: "+transaction.listing + "\nAmount:" + str(transaction.amount) + "\nPayment Method:"+transaction.channel + "\nPayment  Date" + transaction.date_created.strftime("%Y-%m-%d %H:%M:%S") + "\nReceipt Number: PRS" + str(transaction.id) + "REF" + str(transaction.ref) +"\nYour payment has been received successfully!."
-                else:
-                    message = f'Hello '+  str(transaction.username) +' your '+ str(transaction.transactionType) +' payment of GHS' + str(transaction.amount) +' has been recieved successfully.\n\nPowered By PrestoGhana'
-                    responseMessage = message
+                # if listing.slug == 'prontohostel':
+                responseMessage = transaction.listing + "\nSuccessfully bought " +str(transaction.amount) + " for " + str(transaction.username) + "." + "\nBefore: " + str(transaction.balanceBefore) + "\nAfter: "+ str(transaction.balanceAfter) + "\nTransactionId:" + str(transaction.id) + "\nAccount:" + str(transaction.network) + " : "+ str(transaction.account) + "\nLedgerId: " + str(entry.id)
+                message = "Student Name:"+ str(transaction.username) + "\nHostel Name: "+transaction.listing + "\nAmount:" + str(transaction.amount) + "\nPayment Method:"+transaction.channel + "\nPayment  Date" + transaction.date_created.strftime("%Y-%m-%d %H:%M:%S") + "\nReceipt Number: PRS" + str(transaction.id) + "REF" + str(transaction.ref) +"\nYour payment has been received successfully!."
+                # else:
+                    # message = f'Hello '+  str(transaction.username) +' your '+ str(transaction.transactionType) +' payment of GHS' + str(transaction.amount) +' has been recieved successfully.\n\nPowered By PrestoGhana'
+                    # responseMessage = message
                 print("send_sms || PrestoStay)")
                 send_sms(transaction.account, message)
 
