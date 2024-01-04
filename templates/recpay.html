@@ -31,18 +31,19 @@
 
                 <div class="inputTextHolder">
                     <h6>{{form.phone.label}}</h6>
-                    {{form.phone (class="inputTextCard", placeholder="0XXXXXXXXX")}}
+                    <!-- {{form.phone (class="inputTextCard", placeholder="0XXXXXXXXX")}} -->
+                    {{form.phone (class="inputTextCard", placeholder="eg. int18010481")}}
                     {% for error in form.phone.errors %}
                     <h6 style="color: red; font-weight: 100;">{{error}}</h6>
                     {% endfor %}
-                    <h6 style="color: grey; font-weight: 100; font-size: small;">Please enter the phone number you have on record with us</h6>
+                    <!-- <h6 style="color: grey; font-weight: 100; font-size: small;">Please enter the phone or index number you have on record with us. Do not include the slashes or dots.</h6> -->
+                    <h6 style="color: grey; font-weight: 100;" class="text-muted"><b>Do not include the slashes or dots when entering the index number you have on record with us.</b></h6>
                 </div>
             
                 {{form.submit(class="pill-button", onclick="showLoadingScreen()" ,style="width: 100%; margin-top:5vh;")}}
                 
                 <a href='{{url_for("issue",organisationslug="cuoldgirls")}}'>
                     <h6 style="text-align: center; margin-top: 2vh; text-decoration: underline;">
-                            <!-- I want to create an account. -->
                             HELP! I cant find my account!
                         </h6>
                     </a>

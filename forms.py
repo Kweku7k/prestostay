@@ -15,7 +15,7 @@ class BroadcastForm(FlaskForm):
 
 class FindRecUser(FlaskForm):
     organisation = SelectField('Organisation', choices=[('CU Female Annex', 'CU Female Annex')]) #Api call for all rooms
-    phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
+    phone = StringField('Phone Or Index Number', validators=[DataRequired(), Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
     submit = SubmitField('Proceed')
 
 class LoginForm(FlaskForm):
@@ -130,6 +130,7 @@ class ProfileForm(FlaskForm):
     indexNumber = StringField('Index Number')
     roomNumber = StringField('Room Number')
     listing = StringField('Listing')
+    picture = StringField('Picture')
 
     balance = FloatField('Balance')
     paid = FloatField('Paid')

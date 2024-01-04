@@ -1,0 +1,225 @@
+{% extends "layout.html" %}
+
+{% block head %}
+
+{% endblock %}
+{% block body %}
+
+    <div class="container">
+        <div class="row" style="justify-content: space-around; margin-top: 5vh;">
+            <div class="col-md-6">
+                <form action="" method="post">
+
+                <div class="defaultCard">
+
+                    <div class="ellipse" style="border: none; border-radius: 50%; overflow: hidden; margin: auto; background-color: rgb(48, 44, 255); border-radius:rgb(48, 44, 255);">
+                        
+                        <label for="image-picker">
+                            {% if user.image %}
+                            <img id="image-preview" src="{{user.picture}}" style="width: 100%; object-fit: cover;" alt="" srcset="">
+                            {% else %}
+                            <img id="image-preview" src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png" style="width: 100%;" alt="" srcset="">
+                            {% endif %}
+                        </label>
+                        <input style="display:none" id="image-picker" type="file" accept="image/*" />
+                    </div>
+                    <!-- <h6 style="text-align: center; text-decoration: underline; color: grey; padding-top: 10px;">Update Your Profile Picture</h6> -->
+
+
+                    {% if user == None %}
+                    <h1 class="heading" style="text-align: center; margin-top: 5vh;">Add a new tenant</h1>
+                    <h6 style="text-align: center; width: 100%; " class="text-muted">{{listing.name}} </h6>   
+                    
+                    {% endif %}
+
+                    <h1 class="heading" style="text-align: center; margin-top: 5vh;">{{user.username}}</h1>
+                    <h6 style="text-align: center; width: 100%; " class="text-muted">Listing - {{listing.name}}</h6>   
+                    {% if user.roomNumber %}
+                    
+                    <h6 style="text-align: center; width: 100%; " class="text-muted">RoomNumber - {{user.roomNumber}}</h6>   
+                    {% else %}
+                    <h6 style="text-align: center; width: 100%; color: red;">UNASSIGNED</h6>   
+                    
+                    {% endif %}
+                    <h6 style="text-align: center; width: 100%; ">{{user.phone}} </h6>   
+                    
+                    <br/>
+
+                    <hr>
+                    {% if user.fullAmount > 0 %}
+                        <div class="flexBar"><h6>Amount Due</h6><h6 class="text-muted">GHS {{user.fullAmount}}</h6></div>
+                    {% endif %}
+                    
+                    <div class="flexBar"><h6>Amount Paid</h6><h6 class="text-muted">GHS {{user.paid}}</h6></div>
+
+                    {% if user.fullAmount > 0 %}
+                        <div class="flexBar"><h6>Outstanding Balance</h6><h6 class="text-muted">GHS {{user.balance}}</h6></div>
+                    {% endif %}
+                    <!-- <div class="flexBar"><h6>Last Payment</h6><h6 class="text-muted">{{user.lastpayment}}</h6></div> -->
+                    <hr>
+
+                    <div class="row">
+                        <div class="col">
+                            <a href="#">
+                                <button class="pill-button-alternate full">Request Room Change</button>
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a href="#">
+                                <button class="pill-button-danger full">Report Complaint</button>
+                            </a>
+                        </div>
+                </div>
+
+                
+
+
+                    <!-- <form action="" method="post"> -->
+                        {{form.hidden_tag()}}
+                        <div class="inputTextHolder">
+                            <h6>{{form.username.label}}</h6>
+                            {{form.username (class="inputTextCard", placeholder="Enter a full name")}}
+                            {% for error in form.username.errors %}
+                            <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                            {% endfor %}
+                        </div>
+
+                        <div class="inputTextHolder">
+                            <h6>{{form.email.label}}</h6>
+                            {{form.email (class="inputTextCard", placeholder="Enter Your Email Address")}}
+                            {% for error in form.email.errors %}
+                            <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                            {% endfor %}
+                        </div>
+
+                        <div class="inputTextHolder">
+                            <h6>{{form.indexNumber.label}}</h6>
+                            {{form.indexNumber (class="inputTextCard", placeholder="Input Your Index Number")}}
+                            {% for error in form.indexNumber.errors %}
+                            <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                            {% endfor %}
+                        </div>
+
+                        <div class="inputTextHolder">
+                            <h6>{{form.phone.label}}</h6>
+                            {{form.phone (class="inputTextCard", placeholder="How much are you sending")}}
+                            {% for error in form.phone.errors %}
+                            <h6 style="color: red; font-weight: 100;">{{error}}</h6>
+                            {% endfor %}
+                        </div>
+
+                        <div class="inputTextHolder" style="display: none;">
+                            {{ form.picture.label }}
+                            {{ form.picture (id="firebaseLink",class="inputTextCard") }}
+                        </div>
+
+                        {{form.submit(class="pill-button", id='submitButton' ,onclick="showLoadingScreen()", style="width: 100%; margin-top:5vh;")}}
+                    </form>
+                    <br/>
+                    <a href="{{url_for('usertransactions', userId=user.id)}}">
+                        <button class="pill-button-alternate full">View All Transactions</button>
+                    </a>
+                  
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+
+    $("#image-picker").change(function (event) {
+        readURL(this);
+        document.getElementById('error').style.display = 'none';
+    
+    });
+        function readURL(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            pushImage(input.files[0])
+    
+            reader.onload = function (e) {
+                $('#image-preview').attr('src', e.target.result);
+            }
+    
+            reader.readAsDataURL(input.files[0]);
+    
+    
+        }
+    }
+    </script>
+    
+    
+    <script>
+    
+        var firebaseLink = document.getElementById("firebaseLink").innerText
+        // Push batch images to storage and store references in the database
+        var pushImage = function (file) {
+            document.getElementById('submitButton').innerHTML = `
+            <button class="pill-button-alternate" style=" width=100%"><i class="fa fa-pause-circle-o" aria-hidden="true" style="color:'white'"></i>Please wait while we upload your image</button>
+            `
+    
+           // var uid = firebase.auth().currentUser.uid;
+           // Create storage reference
+           var ref = firebase.storage().ref(`/ineruu-142dc-default-rtdb/Images/`).child(file.name + ".jpg");
+       
+           // Upload file and get task
+           var task = ref.put(file, {contentType: file.type});
+        
+           // Monitor task for progress
+           task.on('state_changed',
+               // Shows progress of task
+               function progress(snapshot) {
+                   var percentage = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                   console.log(percentage);
+               },
+               // Shows any errors occurring during progress
+               function error(err) {
+                   // Handle unsuccessful uploads
+                   console.log(err.message);
+       
+               },
+               // Shows when task is completed
+               function complete() {
+                   // Handle successful uploads on complete
+                   var image = task.snapshot.downloadUrl;
+                   var secondImage = task.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+               console.log('File available at', downloadURL);
+            //    firebaseLink = downloadURL
+               document.getElementById("firebaseLink").value = downloadURL
+            //    console.log("Firebase Link: " + firebaseLink)
+                document.getElementById('submitButton').innerHTML = `{{form.submit (class="pill-button",onclick="showLoadingScreen()", style="width:100%")}}`
+    
+             });
+                //    console.log(task);
+                //    console.log(image);
+                //    console.log(secondImage.PromiseResult).then(res => {
+                //        console.log("THis is" + res)
+                       
+                //    });
+       
+                   // Data model to be uploaded to the database
+                   var data = {
+                       imageUrl: image
+                   };
+                   
+                   // var db = firebase.database().ref(/GHotelBookMan/Hotels/${uid}/Images).push();
+                   // db.set(data).then(() => {
+                   //     row.empty();
+                   //     loadCurrentHotel(uid);
+                   // });
+               });  
+       };
+       
+       
+         function changeimagesss(event) {
+           console.log(event)
+           pushImage(event)
+       
+           
+         }
+       
+        </script> 
+    
+
+{% endblock %}

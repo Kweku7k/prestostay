@@ -262,6 +262,7 @@ class User(db.Model, UserMixin):
     dailyDisbursal = db.Column(db.Boolean, default=False)
     username = db.Column(db.String,nullable=False,unique=False)
     email = db.Column(db.String())
+    picture = db.Column(db.String())
     password = db.Column(db.String(), primary_key=False, unique=False, nullable=False)
     # dailyDisbursal = db.Column(db.Boolean, default=False)
 
@@ -1413,7 +1414,9 @@ def recpay(organisationSlug = None):
     }
     if request.method == 'POST':
         if form.validate_on_submit():
+            # if phoneNumber
             phoneNumber = form.phone.data.replace(" ", "")[-9:] 
+            indexNumber = form.phone.data.replace("/", "")
 
             sendTelegram("Attempting to find: "+phoneNumber)
 
@@ -1421,13 +1424,17 @@ def recpay(organisationSlug = None):
             print(phoneNumber)
 
             listing = Listing.query.filter_by(name=form.organisation.data).first()
-            user = User.query.filter(User.phone.endswith(phoneNumber), User.listingSlug==listing.slug).first()
             
+            user = User.query.filter(User.phone.endswith(phoneNumber), User.listingSlug==listing.slug).first()
             print(user)
+            
+            if user is None:
+                print("Finding by indexNumber: ", indexNumber)
+                user = User.query.filter_by(indexNumber = indexNumber).first()
+                print(user)
 
             if user is None:
                 flash(f'We couldnt find anyone with this phone number in '+listing.name+' please check and try again.')
-                sendTelegram("Couldnt find: "+user.username)
                 return redirect(url_for('recpay', organisationSlug=organisationSlug))
             else:
                 sendTelegram("Found: "+user.username)
@@ -2538,6 +2545,57 @@ def profile(id=None):
             except Exception as e:
                 reportError(e)
     return render_template('profile.html', user=user, form=form, listing=getListing(1))
+    # else:
+    #     return render_template('404.html', message = "The user you chose cant be found")
+
+
+@app.route('/userprofile/<int:id>', methods=['GET', 'POST'])
+def userprofile(id):
+    form = ProfileForm()
+    user = User.query.get_or_404(id)
+    if user != None:
+        print(user)
+        if request.method == 'POST':
+            if form.validate_on_submit():
+                print(form.data)
+
+                # check existing data TODO
+
+                try:
+                    user.username = form.username.data
+                    user.balance = form.balance.data
+                    user.phone = form.phone.data
+                    user.indexNumber = form.indexNumber.data
+                    user.email = form.email.data
+                    user.picture = form.picture.data
+                    db.session.commit()
+
+                    # updateUserProfileBalance(id)
+                    updateBalance(id)
+
+                    flash(f'' + user.username+' has been updated successfully')
+                    return redirect(url_for('userprofile', id=id))
+                
+                except Exception as e:
+                    reportError(e)
+                    flash(f'Updating of your profile failed, please check and try again')
+        
+            else:
+                print(form.errors)
+
+        elif request.method == 'GET':
+            form.username.data = user.username
+            form.listing.data = user.listing
+            form.balance.data = user.balance
+            form.phone.data = user.phone
+            form.picture.data = user.picture
+            form.indexNumber.data = user.indexNumber
+            form.fullAmount.data = user.fullAmount
+            form.roomNumber.data = user.roomNumber
+            form.email.data = user.email
+            form.paid.data = user.paid
+
+    return render_template('userprofile.html', user=user, form=form, listing=getListing(1))
     # else:
     #     return render_template('404.html', message = "The user you chose cant be found")
 

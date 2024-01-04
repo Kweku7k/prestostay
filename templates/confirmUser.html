@@ -9,9 +9,18 @@
         <div class="row" style="justify-content: space-around; margin-top: 5vh;">
             <div class="col-md-6">
                 <div class="defaultCard">
+            
                     <div class="ellipse" style="border: none; border-radius: 50%; overflow: hidden; margin: auto; background-color: rgb(48, 44, 255); border-radius:rgb(48, 44, 255);">
-                    <img src="{{url_for('static', filename='img/memoji.png')}}" style="width: 100%;" alt="" srcset="">
+                    {% if user.image == None %}
+                        <img id="image-preview" src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png" style="width: 100%;" alt="" srcset="">
+                    {% else %}
+                        <img id="image-preview" src="{{user.picture}}" style="width: 100%; object-fit: cover;" alt="" srcset="">
+                    {% endif %}
+                        <!-- <img src="{{user.picture}}" style="width: 100%;" alt="" srcset=""> -->
                     </div>
+                    <a href="{{url_for('userprofile', id=user.id)}}">
+                        <h6 style="text-align: center; text-decoration: underline; color: grey; padding-top: 10px;">Update Your Profile</h6>
+                    </a>
 
                     <h1 class="heading" style="text-align: center; margin-top: 5vh;">{{user.username}}</h1>
                     <h6 style="text-align: center; width: 100%; " class="text-muted">{{listing.name}} </h6>   
