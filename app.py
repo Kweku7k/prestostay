@@ -2204,7 +2204,7 @@ def rancardussd():
     sessionRequest = request.json
     sessionBody = {
     "MSISDN": sessionRequest["msisdn"],
-    "USERDATA": sessionRequest["data"],
+    "USERDATA": sessionRequest["message"],
     "NETWORK": sessionRequest["mobileNetwork"],
     "SESSIONID": sessionRequest["sessionId"]
 }
