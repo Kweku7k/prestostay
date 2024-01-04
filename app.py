@@ -2056,8 +2056,11 @@ def confirm(transactionId):
                 print(responseMessage)
                 sendTelegram(responseMessage)
                 sendVendorTelegram(responseMessage, listing.chatId)
+                
+                emails = [ admin.email for admin in User.query.filter_by(role = 'admin').all()]
+                print(emails)
 
-                sendAnEmail(transaction.username, f'GHC {transaction.amount} SUCCESSFULLY RECIEVED', responseMessage, 'mr.adumatta@gmail.com')
+                sendAnEmail(transaction.username, f'GHC {transaction.amount} SUCCESSFULLY RECIEVED', responseMessage, emails)
                 flash(f'This transaction was successful! You should recieve and sms.')
             else:
                 app.logger.error("Transaction: " + str(transaction.id) + " was attempting to be recreated.")
@@ -2076,7 +2079,9 @@ def confirm(transactionId):
 
 @app.route('/foo_mail', methods=['GET', 'POST'])
 def foo_mail():
-    return sendAnEmail('ADUMATTA NANA KWEKU', 'GHC 3000.00 SUCCESSFULLY RECIEVED ', 'Payment of GHC3000 recieved', 'mr.adumatta@gmail.com')
+    emails = [ admin.email for admin in User.query.filter_by(role = 'admin').all()]
+    print(emails)
+    return sendAnEmail('ADUMATTA NANA KWEKU', 'GHC 3000.00 SUCCESSFULLY RECIEVED ', 'Payment of GHC3000 recieved', emails)
     
 
 
