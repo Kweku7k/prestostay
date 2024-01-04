@@ -2046,20 +2046,18 @@ def confirm(transactionId):
             message = "Duplicate"
             entry = updateUserBalance(transaction)
             if entry != None: #If a vote was created
-                # message = "You have successfully bought " + str(entry.amount) + " vote(s) for " + transaction.username + "\n TransactionID: " + str(transaction.id)+"PRS"+str(transaction.ref) + "\n \n Powered By PrestoStay"
-                
-                # if listing.slug == 'prontohostel':
+
                 responseMessage = transaction.listing + "\nSuccessfully bought " +str(transaction.amount) + " for " + str(transaction.username) + "." + "\nBefore: " + str(transaction.balanceBefore) + "\nAfter: "+ str(transaction.balanceAfter) + "\nTransactionId:" + str(transaction.id) + "\nAccount:" + str(transaction.network) + " : "+ str(transaction.account) + "\nLedgerId: " + str(entry.id)
                 message = "Student Name:"+ str(transaction.username) + "\nHostel Name: "+transaction.listing + "\nAmount:" + str(transaction.amount) + "\nPayment Method:"+transaction.channel + "\nPayment  Date" + transaction.date_created.strftime("%Y-%m-%d %H:%M:%S") + "\nReceipt Number: PRS" + str(transaction.id) + "REF" + str(transaction.ref) +"\nYour payment has been received successfully!."
-                # else:
-                    # message = f'Hello '+  str(transaction.username) +' your '+ str(transaction.transactionType) +' payment of GHS' + str(transaction.amount) +' has been recieved successfully.\n\nPowered By PrestoGhana'
-                    # responseMessage = message
+
                 print("send_sms || PrestoStay)")
                 send_sms(transaction.account, message)
 
                 print(responseMessage)
                 sendTelegram(responseMessage)
                 sendVendorTelegram(responseMessage, listing.chatId)
+
+                sendAnEmail(transaction.username, f'GHC {transaction.amount} SUCCESSFULLY RECIEVED', responseMessage, 'mr.adumatta@gmail.com')
                 flash(f'This transaction was successful! You should recieve and sms.')
             else:
                 app.logger.error("Transaction: " + str(transaction.id) + " was attempting to be recreated.")
@@ -2075,6 +2073,11 @@ def confirm(transactionId):
     }
     print(responseBody)
     return responseBody
+
+@app.route('/foo_mail', methods=['GET', 'POST'])
+def foo_mail():
+    return sendAnEmail('ADUMATTA NANA KWEKU', 'GHC 3000.00 SUCCESSFULLY RECIEVED ', 'Payment of GHC3000 recieved', 'mr.adumatta@gmail.com')
+    
 
 
 @app.route('/login', methods=['GET', 'POST'])
