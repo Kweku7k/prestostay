@@ -2190,6 +2190,130 @@ def dashboard():
     return render_template('dashboard.html', data=data,successfulTransactions=successfulTransactions,transactions=transactions, transactionTypes=transactionTypes,cashTransactions=cashTransactions, contacts=contacts ,user=current_user, occupied=occupied,sublistings=sublistings, totalTodayTransactions=totalTodayTransactions,listing=listing, activeUsers=activeUsers, totalTransasactions=totalTransasactions,todaysBalance=todaysBalance,amountRecieved=amountRecieved, due=due,expected_revenue=expected_revenue)
 
 
+def getUserByMsisdn(msisdn):
+    phone = "0"+msisdn[-9:]
+    user = User.query.filter_by(phone = phone).first()
+    return user if user is not None else None
+
+def findByIndexNumber(index):
+    user = User.query.filter_by(indexNumber = index).first()
+    return user if user is not None else None
+
+@app.route('/ussd', methods=['GET', 'POST'])
+def rancardussd():
+    sessionRequest = request.json
+    sessionBody = {
+    "MSISDN": sessionRequest["msisdn"],
+    "USERDATA": sessionRequest["data"],
+    "NETWORK": sessionRequest["mobileNetwork"],
+    "SESSIONID": sessionRequest["sessionId"]
+}
+    print("---------REQUEST-----------")
+    print(sessionRequest)
+    print(sessionBody)
+    print("--------------------")
+
+    msisdn = sessionBody['MSISDN']
+    userdata = sessionBody['USERDATA']
+
+    # message="Hello, Please Enter Your Index Number.\n eg.int/20/01/3356."
+    if sessionRequest['menu'] == 0:
+        session.clear()
+        message = "Welcome to PrestoStay; \nPlease enter your index number to proceed into your account. eg.int/20/01/3356"
+    else:
+        # declare the user
+        user = session.get('userId', None)
+        amount = session.get('amount',None)
+        confirm = session.get('confirm',None)
+
+
+        if userdata is not None:
+
+            print(userdata)
+            
+            if user is None:
+                user = findByIndexNumber(userdata)
+                if user is None:
+                    message = f"Sorry, no user with index number {userdata} was found. Please check and try again."
+                else:
+                    print("Found:", user)
+                    message = f"Hello {user.username} Room: {user.roomNumber}. You have an outstanding balance of GHS {user.balance}. Please enter your amount due"
+                    session['userId'] = user.id
+                    session['username'] = user.username
+                    session['userbalance'] = user.balance
+                    session['userlisting'] = user.listing
+                    session['userlistingslug'] = user.listingSlug
+                    session['userroomnumber'] = user.roomNumber
+
+            elif amount is None:
+                session['amount'] = userdata
+                message = f"Please confirm transaction of GHS {userdata} to {session['userlisting']} Room: {session['userroomnumber']} \n1. Confirm \n2.Cancel"
+
+            elif confirm is None:
+                session['confirm'] = userdata
+                if userdata == '1':
+                    # make api call!
+                    body={
+                        "userId":user,
+                        "appId":session.get('userlistingslug','cuoldgirls'),
+                        "username":session.get('username', None),
+                        "roomID":session.get('userroomnumber', None),
+                        "listing":session.get('userlisting', 'CU Old Girls'),
+                        "amount":amount,
+                        "balanceBefore":session.get('userbalance', None),
+                        "transactionType":"form.transactionType.data",
+                        "account":msisdn, 
+                        "network":sessionRequest['mobileNetwork'],
+                        "channel":"USSD"
+                    }
+
+                    transaction = createTransaction(body)
+                    payWithPrestoPay(transaction)
+                    # if api call is successful.
+                    # if sessionRequest['mobileNetwork'] == 'MTN':
+                    message = "Please check your approvals to confirm this transaction."
+                    # else:
+                    #     message = "Please check your approvals to confirm this transaction."
+
+                else:
+                    session.clear()
+                    message = "Welcome to PrestoStay; \nPlease enter your index number to proceed into your account. eg.int/20/01/3356"
+
+        else:
+            message = "Please check your entry and try again!"
+
+
+
+        
+
+    # if user there is user proceed, else, fraud
+    # if user is not None: #If an account is found
+    #     if session['amount'] is not None:
+    #         message = "Please confirm transaction of GHS {amount} to {user.listing} Room: {user.roomNumber} "
+    # else: 
+    #     message = "Unfortunately we didnt find index number: {userdata} \nPlease enter your index number to proceed into your account."
+
+    # else:
+    #     # FIRST REQUEST GOES HERE!
+    #     user = getUserByMsisdn(msisdn)
+    #     if user:
+    #         session['userId'] = user.id
+    #         session['username'] = user.username
+    #         session['userbalance'] = user.balance
+    #         message = f"Hello {user.username} Room: {user.roomNumber}. You have an outstanding balance of GHS {user.balance}. Please enter your amount due"
+    #     else:
+    #         message = f"Welcome to PrestoStay; Please enter your index number to proceed into your account."
+
+    response = {
+            "continueSession": True,
+            "message": message
+        }
+
+    return response
+
+
+
+
 @app.route('/upload/<string:dataType>', methods=['GET', 'POST'])
 @app.route('/upload/<string:listingSlug>/<string:dataType>', methods=['GET', 'POST'])
 def upload(listingSlug, dataType = None):
