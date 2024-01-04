@@ -2211,6 +2211,8 @@ def rancardussd():
     print("---------REQUEST-----------")
     print(sessionRequest)
     print(sessionBody)
+    print("---------SESSION DATA-----------")
+    print(session)
     print("--------------------")
 
     msisdn = sessionBody['MSISDN']
@@ -2225,7 +2227,6 @@ def rancardussd():
         user = session.get('userId', None)
         amount = session.get('amount',None)
         confirm = session.get('confirm',None)
-
 
         if userdata is not None:
 
