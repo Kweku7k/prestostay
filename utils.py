@@ -287,5 +287,4 @@ def logger(message, flash=False):
     print(message)
     if flash == True:
         flash(message)
-    # send telegram as log.
-    # add to db as entry
+    return True

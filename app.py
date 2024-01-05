@@ -239,6 +239,7 @@ class User(db.Model, UserMixin):
     phone = db.Column(db.String)
     role = db.Column(db.String, default="user")
     indexNumber = db.Column(db.String)
+    ussdIndexNumber = db.Column(db.String)
     hostel = db.Column(db.String)
     listing = db.Column(db.String)
     listingSlug = db.Column(db.String)
@@ -1416,9 +1417,10 @@ def recpay(organisationSlug = None):
         if form.validate_on_submit():
             # if phoneNumber
             phoneNumber = form.phone.data.replace(" ", "")[-9:] 
-            indexNumber = form.phone.data.replace("/", "")
+            ussdindexNumber = updateIndexNumberToUSSDFormat(form.phone.data)
 
-            sendTelegram("Attempting to find: "+phoneNumber)
+            sendTelegram("Attempting to find PHONE: "+phoneNumber)
+            sendTelegram("Attempting to find INDEXNUMBER: "+ussdindexNumber)
 
             print("phoneNumber")
             print(phoneNumber)
@@ -1429,8 +1431,8 @@ def recpay(organisationSlug = None):
             print(user)
             
             if user is None:
-                print("Finding by indexNumber: ", indexNumber)
-                user = User.query.filter_by(indexNumber = indexNumber).first()
+                print("Finding by indexNumber: ", ussdindexNumber)
+                user = User.query.filter_by(ussdIndexNumber = ussdindexNumber).first()
                 print(user)
 
             if user is None:
@@ -2450,6 +2452,11 @@ def updateBalance(userId):
     user = User.query.get_or_404(userId)
     room = SubListing.query.filter_by(name = user.roomNumber).first()
 
+    if user.indexNumber is not None:
+        user.ussdIndexNumber = updateIndexNumberToUSSDFormat(user.indexNumber)
+        print("Updated ", user.indexNumber, " to ", user.ussdIndexNumber)
+        db.session.commit()
+
     if room is not None:
         user.fullAmount = room.price
         user.balance = user.fullAmount - user.paid
@@ -2599,8 +2606,28 @@ def userprofile(id):
     # else:
     #     return render_template('404.html', message = "The user you chose cant be found")
 
+def updateIndexNumberToUSSDFormat(indexNumber):
+    print("Converting Index Number: ",indexNumber)
+    id = indexNumber.replace(" ","")
+    id = id.replace('/','')
+    id = id.lower()
+    print(id)
+    return id
 
 
+def datacomply(listingSlug):
+    # update index numbers
+    print("Initiating update of index numbers to remove special characters")
+    for i, count in enumerate(User.query.filter_by(listingSlug = listingSlug).all()):
+        print(count, " - " , i.indexNumber)
+        i.ussdIndexNumber =  updateIndexNumberToUSSDFormat(i.indexNumber)
+        try:
+            db.session.commit()
+            print("SUCCESS: ",i.indexNumber)
+        except:
+            print(i.indexNumber, " conversion failed!.")
+
+    return "Done?"
 
 
 if __name__ == '__main__':

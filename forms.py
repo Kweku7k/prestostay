@@ -125,7 +125,7 @@ class UserListing(FlaskForm):
 
 class ProfileForm(FlaskForm):
     username = StringField('Name', validators=[DataRequired()])
-    phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=13, message="Your phone number should be more than 10 digits and less than 15")])
+    phone = StringField('Phone', validators=[DataRequired(), Length(min=10, max=15, message="Your phone number should be more than 10 digits and less than 15")])
     email = StringField('Email', validators=[DataRequired()])
     indexNumber = StringField('Index Number')
     roomNumber = StringField('Room Number')

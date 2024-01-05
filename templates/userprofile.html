@@ -15,7 +15,7 @@
                     <div class="ellipse" style="border: none; border-radius: 50%; overflow: hidden; margin: auto; background-color: rgb(48, 44, 255); border-radius:rgb(48, 44, 255);">
                         
                         <label for="image-picker">
-                            {% if user.image %}
+                            {% if user.picture %}
                             <img id="image-preview" src="{{user.picture}}" style="width: 100%; object-fit: cover;" alt="" srcset="">
                             {% else %}
                             <img id="image-preview" src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png" style="width: 100%;" alt="" srcset="">
@@ -42,6 +42,7 @@
                     
                     {% endif %}
                     <h6 style="text-align: center; width: 100%; ">{{user.phone}} </h6>   
+                    <h6 style="text-align: center; width: 100%; ">{{user.ussdIndexNumber}} </h6>   
                     
                     <br/>
 
