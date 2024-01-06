@@ -46,8 +46,9 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 mapsApiKey = os.environ.get('GOOGLEMAPSAPIKEY')
 
-prestoUrl = "https://sandbox.prestoghana.com"
-baseUrl = "https://stay.prestoghana.com"
+prestoUrl = os.environ.get('PRESTO_URL')
+baseUrl = os.environ.get('STAY_BASE_URL')
+# baseUrl = "https://stay.prestoghana.com"
 
 merchantID = "ec5fb5b5-2b80-4a9a-b522-24c90912f106"
 
