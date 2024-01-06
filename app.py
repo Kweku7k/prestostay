@@ -5,7 +5,7 @@ import json
 import os
 import random
 from flask import Flask, flash, jsonify,redirect, session,url_for,render_template, request
-from flask_redis import FlaskRedis
+# from flask_redis import FlaskRedis
 from flask_login import UserMixin, login_user, logout_user, current_user, LoginManager, login_required
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -19,6 +19,7 @@ import pprint
 import time
 import requests
 import geocoder
+import redis
 from urllib.parse import quote as url_quote
 from sqlalchemy import or_
 
@@ -29,10 +30,12 @@ sandboxDb = "postgresql://postgres:adumatta@database-1.crebgu8kjb7o.eu-north-1.r
 app.config['SECRET_KEY'] = 'c280ba2428b2157916b13s5e0c676dfde'
 app.config['SQLALCHEMY_DATABASE_URI']= sandboxDb
 # app.config['REDIS_URL'] = "redis://demotestcache.ev3s5r.clustercfg.eun1.cache.amazonaws.com:6379/0"
-app.config['REDIS_URL'] = "redis://master.redistry3.ev3s5r.eun1.cache.amazonaws.com:6379/0"
+# app.config['REDIS_URL'] = "redis://myrediscluster.ev3s5r.ng.0001.eun1.cache.amazonaws.com:6379/0"
+
 googlerecaptchakey = "6LeVvCEpAAAAAJpamR_cN4meMFiMbuLO32Z3wrUu"
 
-redis = FlaskRedis(app)
+r = redis.Redis(host='myrediscluster.ev3s5r.ng.0001.eun1.cache.amazonaws.com', port=6379, db=0, password="myrediscluster")
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
@@ -1000,8 +1003,8 @@ def landingPage():
 
 @app.route('/redistest', methods=['GET', 'POST']) 
 def redistest():
-    redis.set('example_key', 'eg.value')
-    value = redis.get('example_key')
+    r.set('example_key', 'eg.value')
+    value = r.get('example_key')
     return f'The redis value is :{value}'
 
 @app.route('/recpayment')
