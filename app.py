@@ -34,7 +34,7 @@ app.config['SQLALCHEMY_DATABASE_URI']= sandboxDb
 
 googlerecaptchakey = "6LeVvCEpAAAAAJpamR_cN4meMFiMbuLO32Z3wrUu"
 
-r = redis.Redis(host='myrediscluster.ev3s5r.ng.0001.eun1.cache.amazonaws.com', port=6379, db=0, password="myrediscluster")
+r = redis.Redis(host='testing.0pzc6x.ng.0001.use1.cache.amazonaws.com', port=6379, db=0, password="myrediscluster")
 
 login_manager = LoginManager()
 login_manager.init_app(app)
