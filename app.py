@@ -5,6 +5,7 @@ import json
 import os
 import random
 from flask import Flask, flash, jsonify,redirect, session,url_for,render_template, request
+from flask_redis import FlaskRedis
 from flask_login import UserMixin, login_user, logout_user, current_user, LoginManager, login_required
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -27,9 +28,11 @@ bcrypt = Bcrypt(app)
 sandboxDb = "postgresql://postgres:adumatta@database-1.crebgu8kjb7o.eu-north-1.rds.amazonaws.com:5432/staysandbox"
 app.config['SECRET_KEY'] = 'c280ba2428b2157916b13s5e0c676dfde'
 app.config['SQLALCHEMY_DATABASE_URI']= sandboxDb
+# app.config['REDIS_URL'] = "redis://demotestcache.ev3s5r.clustercfg.eun1.cache.amazonaws.com:6379/0"
+app.config['REDIS_URL'] = "redis://master.redistry3.ev3s5r.eun1.cache.amazonaws.com:6379/0"
 googlerecaptchakey = "6LeVvCEpAAAAAJpamR_cN4meMFiMbuLO32Z3wrUu"
 
-
+redis = FlaskRedis(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
@@ -994,6 +997,12 @@ def index():
 @app.route('/')
 def landingPage():
     return render_template('landingpage.html', loadingMessage = "Loading!")
+
+@app.route('/redistest', methods=['GET', 'POST']) 
+def redistest():
+    redis.set('example_key', 'eg.value')
+    value = redis.get('example_key')
+    return f'The redis value is :{value}'
 
 @app.route('/recpayment')
 def recpayment():
@@ -2124,7 +2133,7 @@ def dashboard():
     # listing = getListing(current_user.listing)
     listing = Listing.query.get_or_404(1)
     activeUsers = User.query.filter_by(listingSlug = listing.slug).count()
-    amountRecieved = listing.amountRecieved
+    amountRecieved = 0 #TODO: Please calculate this value
     expected_revenue = listing.expectedRevenue
     due = expected_revenue - amountRecieved
     totalTransasactions = 20
@@ -2139,7 +2148,7 @@ def dashboard():
     todaysTransactions = Transactions.query.filter(
     func.date(Transactions.date_created) == func.date(datetime.datetime.utcnow()),
     Transactions.paid == True,
-    Transactions.appId == "pronto"
+    Transactions.appId == "pronto" #TODO: Please review!
     ).all()
 
     transactions = Transactions.query.filter_by(appId =listing.slug).count()
@@ -2204,7 +2213,7 @@ def dashboard():
     }
 
     pprint.pprint(data)
-    return render_template('dashboard.html', data=data,successfulTransactions=successfulTransactions,transactions=transactions, transactionTypes=transactionTypes,cashTransactions=cashTransactions, contacts=contacts ,user=current_user, occupied=occupied,sublistings=sublistings, totalTodayTransactions=totalTodayTransactions,listing=listing, activeUsers=activeUsers, totalTransasactions=totalTransasactions,todaysBalance=todaysBalance,amountRecieved=amountRecieved, due=due,expected_revenue=expected_revenue)
+    return render_template('dashboard.html', data=data,successfulTransactions=successfulTransactions,transactions=transactions, transactionTypes=transactionTypes,cashTransactions=cashTransactions, contacts=contacts ,user=current_user, occupied=occupied,sublistings=sublistings, totalTodayTransactions=totalTodayTransactions,listing=listing, activeUsers=activeUsers, totalTransasactions=totalTransasactions,todaysBalance=todaysBalance,amountRecieved=amountRecieved)
 
 
 def getUserByMsisdn(msisdn):
