@@ -1,0 +1,10 @@
+HOW TO RUN THIS PROJECT
+
+#activate your environment
+source ~/.bash_profile
+
+#Active your environment
+source env/bin/activate
+
+#To connect to redis via ssh tunneling
+ssh -i "nanaprestoinstance.pem" -L 6379:testing.0pzc6x.ng.0001.use1.cache.amazonaws.com:6379 ec2-user@ec2-3-93-187-140.compute-1.amazonaws.com

@@ -4,6 +4,7 @@ from datetime import timedelta
 import json
 import os
 import random
+import re
 from flask import Flask, flash, jsonify,redirect, session,url_for,render_template, request
 # from flask_redis import FlaskRedis
 from flask_login import UserMixin, login_user, logout_user, current_user, LoginManager, login_required
@@ -34,7 +35,8 @@ app.config['SQLALCHEMY_DATABASE_URI']= sandboxDb
 
 googlerecaptchakey = "6LeVvCEpAAAAAJpamR_cN4meMFiMbuLO32Z3wrUu"
 
-r = redis.Redis(host='testing.0pzc6x.ng.0001.use1.cache.amazonaws.com', port=6379, db=0)
+r = redis.Redis(host=os.environ.get('STAY_REDIS_CACHE_URL'), port=6379, db=0)
+
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -44,7 +46,7 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 mapsApiKey = os.environ.get('GOOGLEMAPSAPIKEY')
 
-prestoUrl = "https://prestoghana.com"
+prestoUrl = "https://sandbox.prestoghana.com"
 baseUrl = "https://stay.prestoghana.com"
 
 merchantID = "ec5fb5b5-2b80-4a9a-b522-24c90912f106"
@@ -53,6 +55,9 @@ environment = os.environ["ENVIRONMENT"]
 # This value confirms the server is not null
 server = os.environ["SERVER"]
 # server = "SERVER"
+
+#  ssh -i "nanaprestoinstance.pem" -L 6379:testing.0pzc6x.ng.0001.use1.cache.amazonaws.com:6379 ec2-user@ec2-3-93-187-140.compute-1.amazonaws.com
+
 
 
 #  ----- LOGIN MANAGER
@@ -1003,7 +1008,7 @@ def landingPage():
 
 @app.route('/redistest', methods=['GET', 'POST']) 
 def redistest():
-    r.set('example_key', 'eg.value')
+    r.set('example_key', 'eg.big spender')
     value = r.get('example_key')
     return f'The redis value is :{value}'
 
@@ -2224,63 +2229,106 @@ def getUserByMsisdn(msisdn):
     user = User.query.filter_by(phone = phone).first()
     return user if user is not None else None
 
-def findByIndexNumber(index):
-    user = User.query.filter_by(indexNumber = index).first()
+def findByIndexNumber(index): #TODO: Update this query to support phone and index numbers
+    index = updateIndexNumberToUSSDFormat(index)
+    user = User.query.filter_by(ussdIndexNumber = index).first()
     return user if user is not None else None
+
+def set_redis(sessionRequest,key, value):
+    print("Setting redis value:",key)
+    redisId = sessionRequest['msisdn']+"-"+sessionRequest['sessionId']
+    if value is None:
+        return None
+    else:
+        rediskey = redisId+key
+        redisSetValue = r.set(rediskey, value)
+        return redisSetValue
+
+def get_redis(sessionRequest,key):
+    print("Returning all session requests")
+    print(sessionRequest)
+    # concat sessionId and msisdn -> unique variables!
+    redisId = sessionRequest['msisdn']+"-"+sessionRequest['sessionId']
+    rediskey = redisId+key
+    redisfoundvalue = r.get(rediskey)
+    return redisfoundvalue
+
 
 @app.route('/ussd', methods=['GET', 'POST'])
 def rancardussd():
     sessionRequest = request.json
-    sessionBody = {
-    "MSISDN": sessionRequest["msisdn"],
-    "USERDATA": sessionRequest["message"],
-    "NETWORK": sessionRequest["mobileNetwork"],
-    "SESSIONID": sessionRequest["sessionId"]
-}
+
     print("---------REQUEST-----------")
     print(sessionRequest)
-    print(sessionBody)
     print("---------SESSION DATA-----------")
     print(session)
     print("--------------------")
 
-    msisdn = sessionBody['MSISDN']
-    userdata = sessionBody['USERDATA']
+    msisdn = sessionRequest['msisdn']
+    userdata = sessionRequest['message']
+    continueSession = True
 
-    # message="Hello, Please Enter Your Index Number.\n eg.int/20/01/3356."
+    print(r.keys('*')) #TODO: Delete before deployment to production
+
+
+    # FIRST REQUEST IS ROUTED HERE!
     if sessionRequest['menu'] == 0:
-        session.clear()
-        message = "Welcome to PrestoStay; \nPlease enter your index number to proceed into your account. eg.int/20/01/3356"
-    else:
-        # declare the user
-        user = session.get('userId', None)
-        amount = session.get('amount',None)
-        confirm = session.get('confirm',None)
+        message = "Welcome to PrestoStay; \nPlease enter your index number to proceed into your account. eg.int20013356"
 
-        if userdata is not None:
+    else:
+
+        user = get_redis(sessionRequest, 'user')
+        print("printing redis user!")
+        print("redisuser: ",user)
+
+        amount = get_redis(sessionRequest,"amount")
+        print("redisamount: ",amount)
+        
+        confirm = get_redis(sessionRequest, "confirm")
+        print(confirm)
+
+        if userdata is not None: #If data was entered 
 
             print(userdata)
             
-            if user is None:
-                user = findByIndexNumber(userdata)
-                if user is None:
+            if user is None: #If There hasn't been a user assigned yet!
+                user = findByIndexNumber(userdata)  #Find user by index number provided
+
+                if user is None: #If No one was found ...
                     message = f"Sorry, no user with index number {userdata} was found. Please check and try again."
+
                 else:
                     print("Found:", user)
+
                     message = f"Hello {user.username} Room: {user.roomNumber}. You have an outstanding balance of GHS {user.balance}. Please enter your amount due"
-                    session['userId'] = user.id
-                    session['username'] = user.username
-                    session['userbalance'] = user.balance
-                    session['userlisting'] = user.listing
-                    session['userlistingslug'] = user.listingSlug
-                    session['userroomnumber'] = user.roomNumber
+
+                    set_redis(sessionRequest, 'user', user.id)
+                    set_redis(sessionRequest, 'userId', user.id)
+                    set_redis(sessionRequest, 'username', user.username)
+                    set_redis(sessionRequest, 'userbalance', user.balance)
+                    set_redis(sessionRequest, 'userlisting', user.listing)
+                    set_redis(sessionRequest, 'userlistingSlug', user.listingSlug)
+                    set_redis(sessionRequest, 'userroomnumber', user.roomNumber)
+
 
             elif amount is None:
-                session['amount'] = userdata
-                message = f"Please confirm transaction of GHS {userdata} to {session['userlisting']} Room: {session['userroomnumber']} \n1. Confirm \n2.Cancel"
+                # check user data to confirm it is either a number or a float.
+                try:
+                    userdata = float(userdata)
+                    if type(userdata) == float:
+                        if userdata > 0:
+                            message = f"Please confirm transaction of GHS {userdata} to {get_redis(sessionRequest,'useristing')} Room: {get_redis(sessionRequest, 'userroomnumber')} \n1. Confirm \n2.Cancel"
+                            set_redis(sessionRequest, 'amount', userdata)
+                        else:
+                            message = "Sorry, the amount you entered must be larger than 0. Please check and try again."
+                    else:
+                        message = "Sorry the amount you entered was invalid, please try again"
+                except Exception as e:
+                        reportError(e)
+                        message = "Sorry the amount you entered was invalid, please try again"
+
 
             elif confirm is None:
-                session['confirm'] = userdata
                 if userdata == '1':
                     # make api call!
                     body={
@@ -2302,11 +2350,14 @@ def rancardussd():
                     # if api call is successful.
                     # if sessionRequest['mobileNetwork'] == 'MTN':
                     message = "Please check your approvals to confirm this transaction."
+                    set_redis(sessionRequest, 'confirm', userdata)
                     # else:
                     #     message = "Please check your approvals to confirm this transaction."
 
                 else:
-                    session.clear()
+                    # session.clear()
+                    # clear all user data with the same params?
+                    continueSession = False
                     message = "Welcome to PrestoStay; \nPlease enter your index number to proceed into your account. eg.int/20/01/3356"
 
         else:
@@ -2335,7 +2386,7 @@ def rancardussd():
     #         message = f"Welcome to PrestoStay; Please enter your index number to proceed into your account."
 
     response = {
-            "continueSession": True,
+            "continueSession": continueSession,
             "message": message
         }
 
@@ -2620,9 +2671,9 @@ def userprofile(id):
 
 def updateIndexNumberToUSSDFormat(indexNumber):
     print("Converting Index Number: ",indexNumber)
-    id = indexNumber.replace(" ","")
-    id = id.replace('/','')
+    id = re.sub(r'[^a-zA-Z0-9]', '', indexNumber)
     id = id.lower()
+    # TODO: lets remove all special characters, for ussd purposes
     print(id)
     return id
 
