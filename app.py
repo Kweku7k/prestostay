@@ -2242,6 +2242,7 @@ def set_redis(sessionRequest,key, value):
     else:
         rediskey = redisId+key
         redisSetValue = r.set(rediskey, value)
+        r.expire(rediskey, 1500)
         return redisSetValue
 
 def get_redis(sessionRequest,key):
@@ -2332,18 +2333,21 @@ def rancardussd():
                 if userdata == '1':
                     # make api call!
                     body={
-                        "userId":user,
+                        "userId":int(user),
                         "appId":session.get('userlistingslug','cuoldgirls'),
                         "username":session.get('username', None),
                         "roomID":session.get('userroomnumber', None),
                         "listing":session.get('userlisting', 'CU Old Girls'),
-                        "amount":amount,
+                        "amount":float(amount),
                         "balanceBefore":session.get('userbalance', None),
                         "transactionType":"form.transactionType.data",
                         "account":msisdn, 
                         "network":sessionRequest['mobileNetwork'],
                         "channel":"USSD"
                     }
+                    print("-------body--------")
+                    print(body)
+                    print("--------end--------")
 
                     transaction = createTransaction(body)
                     payWithPrestoPay(transaction)
