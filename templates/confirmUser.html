@@ -49,6 +49,20 @@
                     {% if user.fullAmount > 0 %}
                         <div class="flexBar"><h6>Outstanding Balance</h6><h6 class="text-muted">GHS {{user.balance}}</h6></div>
                     {% endif %}
+
+                    <hr>
+                    <div class="row">
+                        <div class="col">
+                            <a href="#">
+                                <button class="pill-button-alternate full">Request Room Change</button>
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a href="#">
+                                <button class="pill-button-danger full">Report Complaint</button>
+                            </a>
+                        </div>
+                </div>
                     <!-- <div class="flexBar"><h6>Last Payment</h6><h6 class="text-muted">{{user.lastpayment}}</h6></div> -->
                     <hr>
                         <form action="" method="post">

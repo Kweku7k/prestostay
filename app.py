@@ -2654,7 +2654,7 @@ def userprofile(id):
                     updateBalance(id)
 
                     flash(f'' + user.username+' has been updated successfully')
-                    return redirect(url_for('userprofile', id=id))
+                    return redirect(url_for('pay', id=id))
                 
                 except Exception as e:
                     reportError(e)

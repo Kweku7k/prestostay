@@ -59,18 +59,7 @@
                     <!-- <div class="flexBar"><h6>Last Payment</h6><h6 class="text-muted">{{user.lastpayment}}</h6></div> -->
                     <hr>
 
-                    <div class="row">
-                        <div class="col">
-                            <a href="#">
-                                <button class="pill-button-alternate full">Request Room Change</button>
-                            </a>
-                        </div>
-                        <div class="col">
-                            <a href="#">
-                                <button class="pill-button-danger full">Report Complaint</button>
-                            </a>
-                        </div>
-                </div>
+                   
 
                 
 
@@ -117,9 +106,9 @@
                         {{form.submit(class="pill-button", id='submitButton' ,onclick="showLoadingScreen()", style="width: 100%; margin-top:5vh;")}}
                     </form>
                     <br/>
-                    <a href="{{url_for('usertransactions', userId=user.id)}}">
+                    <!-- <a href="{{url_for('usertransactions', userId=user.id)}}">
                         <button class="pill-button-alternate full">View All Transactions</button>
-                    </a>
+                    </a> -->
                   
                 </div>
             </div>
