@@ -1335,6 +1335,8 @@ def register(organisationslug = None):
                 user = User.query.filter_by(email=form.email.data).first()
 
                 # return redirect(url_for('pay', userId=user.id))
+                flash(f'Your request has been recieved, if approved you will recieve an email and you can proceed to login.')
+                sendAnEmail('STAY ADMIN ACCOUNT','PRESTOSTAY ADMIN ACCOUNT CREATION', 'A new user: {user.username} is requesting to upgrade credentials to admin, please click on this link to approve:')
                 return redirect(url_for('sublisting', userId=user.id))
         else:
             print(form.errors)
@@ -1435,6 +1437,7 @@ def recpay(organisationSlug = None):
         if form.validate_on_submit():
             # if phoneNumber
             phoneNumber = form.phone.data.replace(" ", "")[-9:] 
+
             ussdindexNumber = updateIndexNumberToUSSDFormat(form.phone.data)
 
             sendTelegram("Attempting to find PHONE: "+phoneNumber)
@@ -1795,6 +1798,7 @@ def updateSubListing(userId, subListingId):
             sublisting.vacant = True
         db.session.commit()
 
+        sendTelegram("user: "+ user.username +" has been assigned to:"+ str(sublisting.name))
         sendTelegram("Sublisting: "+ sublisting.name +" has been updated to: \nOccupants:"+ str(sublisting.occupants))
 
     except Exception as e:
@@ -2138,6 +2142,7 @@ def login():
     return render_template('login.html', form=form)
 
 @app.route('/dashboard', methods=['GET', 'POST'])
+@login_required
 def dashboard():
     # listing = getListing(current_user.listing)
     listing = Listing.query.get_or_404(1)
@@ -2270,12 +2275,12 @@ def rancardussd():
     userdata = sessionRequest['message']
     continueSession = True
 
-    print(r.keys('*')) #TODO: Delete before deployment to production
+    #print(r.keys('*')) #TODO: Delete before deployment to production
 
 
     # FIRST REQUEST IS ROUTED HERE!
     if sessionRequest['menu'] == 0:
-        message = "Welcome to PrestoStay; \nPlease enter your index number to proceed into your account. eg.int20013356"
+        message = "Welcome to PrestoStay; \nPlease enter your index number or phone number to proceed into your account. eg.int20013356"
 
     else:
 
