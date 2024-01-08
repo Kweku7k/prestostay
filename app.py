@@ -1238,7 +1238,7 @@ def onboard(organisationslug):
             try:
                 db.session.add(newuser)
                 db.session.commit()
-                send_sms(newuser.phone, "You have been successfully onboarded to PrestoStay. \nhttps://stay.prestoghana.com/" + str(newuser.id) +  " \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
+                send_sms(newuser.phone, f"You have been successfully onboarded to PrestoStay. \n{baseUrl}" + str(newuser.id) +  " \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
                 sendTelegram(newuser.phone, newuser.username +" : " + newuser.phone + "has onboarded to PrestoPay. \nhttps://stay.prestoghana.com/profile/ \nYour username is "+ newuser.username+ "\nIf you need any form of support you can call +233545977791 ")
                 return redirect(url_for('sublisting', userId=newuser.id))
             except Exception as e:
